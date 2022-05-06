@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:BedrockWire.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="BedrockWire.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="BedrockWire"
+		xmlns:local="clr-namespace:BedrockWire;assembly=BedrockWire">
+
+	<Window.Resources>
+		<local:HexConverter x:Key="hexConverter"/>
+		<local:BackgroundColorConverter x:Key="backgroundColorConverter"/>
+		<local:MsTimeConverter x:Key="msTimeConverter"/>
+		<local:DictionaryTreeViewConverter x:Key="dictionaryTreeViewConverter"/>
+	</Window.Resources>
+
+	<Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+	<DockPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10">
+			<Button Command="{Binding OnOpenCommand}" CommandParameter="{Binding $parent[Window]}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">Open Packet Dump</Button>
+			<Button Command="{Binding OnLoadProtocolCommand}" CommandParameter="{Binding $parent[Window]}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">Load Protocol Definition</Button>
+		</StackPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10">
+			<CheckBox IsChecked="{Binding FilterOutMoveDelta, Mode=OneWayToSource}">Filter out MoveDelta</CheckBox>	
+		</StackPanel>
+		<Grid ColumnDefinitions="*, 4, *" >
+			<DataGrid Grid.Column="0" Items="{Binding FilteredPacketList}" SelectedItem="{Binding SelectedPacket}" AutoGenerateColumns="False">
+				<DataGrid.Styles>
+					<Style Selector="DataGridRow">
+						<Setter Property="Background" Value="{Binding HasError, Mode=OneWay, Converter={StaticResource backgroundColorConverter}}"/>
+					</Style>
+				</DataGrid.Styles>
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="Direction"  Binding="{Binding Direction}" IsReadOnly="True"/>
+					<DataGridTextColumn Header="Time" Binding="{Binding Time, Mode=OneTime, Converter={StaticResource msTimeConverter}}" IsReadOnly="True"/>
+					<DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True"/>
+					<DataGridTextColumn Header="Packet Name" Binding="{Binding Name}" IsReadOnly="True"/>
+					<DataGridTextColumn Header="Length" Binding="{Binding Length}" IsReadOnly="True"/>
+				</DataGrid.Columns>
+			</DataGrid>
+			<GridSplitter Grid.Column="1" Background="Gray" ResizeDirection="Columns"/>
+			<Grid Grid.Column="2" RowDefinitions="*, 4, *" DataContext="{Binding SelectedPacket}">
+				<TreeView Grid.Row="0" Items="{Binding Decoded, Mode=OneWay, Converter={StaticResource dictionaryTreeViewConverter}}"></TreeView>
+				<GridSplitter Grid.Row="1" Background="Gray" ResizeDirection="Rows"/>
+				<TextBox FontFamily="Inconsolata,Consolas,Monospace,Courier" Grid.Row="2" Text="{Binding Payload, Mode=OneWay, Converter={StaticResource hexConverter}}" IsReadOnly="True"></TextBox>
+			</Grid>
+		</Grid>
+	</DockPanel>
+</Window>
