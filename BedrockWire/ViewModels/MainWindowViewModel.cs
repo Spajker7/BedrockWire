@@ -198,6 +198,12 @@ namespace BedrockWire.ViewModels
 
             return packetField;
         }
+
+        public async void DecodeCommand(Packet packet)
+        {
+            DecodePacket(packet);
+        }
+
         public async void OnLoadProtocolCommand(Window window)
         {
             var dlg = new OpenFileDialog();

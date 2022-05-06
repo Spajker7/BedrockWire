@@ -51,6 +51,15 @@
 					<DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Packet Name" Binding="{Binding Name}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Length" Binding="{Binding Length}" IsReadOnly="True"/>
+					<DataGridTemplateColumn Header="Actions" Width="*" >
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate >
+								<StackPanel Orientation="Horizontal">
+									<Button Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}, Path=DataContext.DecodeCommand}" CommandParameter="{Binding}">Decode</Button>
+								</StackPanel>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
 				</DataGrid.Columns>
 			</DataGrid>
 			<GridSplitter Grid.Column="1" MinWidth="1" Width="1" Background="Gray" ResizeDirection="Columns"/>

@@ -35,6 +35,11 @@ namespace BedrockWire.Models
             return reader.ReadInt16();
         }
 
+        private static object ReadUShort(BinaryReader reader)
+        {
+            return reader.ReadUInt16();
+        }
+
         private static object ReadLong(BinaryReader reader)
         {
             return reader.ReadInt64();
@@ -157,7 +162,18 @@ namespace BedrockWire.Models
             return nbtFile.RootTag.ToString();
         }
 
-        
+        private static object ReadNBTByteArray(BinaryReader reader)
+        {
+            ReadLength(reader); // we should be able to discard this
+            NbtFile nbtFile = new NbtFile();
+            nbtFile.BigEndian = false;
+            nbtFile.UseVarInt = true;
+            nbtFile.AllowAlternativeRootTag = true;
+
+            nbtFile.LoadFromStream(reader.BaseStream, NbtCompression.None);
+            return nbtFile.RootTag.ToString();
+        }
+
         private static object ReadList16(BinaryReader reader, List<PacketField> subFields)
         {
             int count = reader.ReadInt16();
@@ -204,6 +220,7 @@ namespace BedrockWire.Models
         {
             {"shortBE", ReadShortBe},
             {"short", ReadShort},
+            {"ushort", ReadUShort},
             {"intBE", ReadIntBe},
             {"int", ReadInt},
             {"long", ReadLong},
@@ -222,6 +239,7 @@ namespace BedrockWire.Models
             {"jwt", ReadJwt },
             {"uuid", ReadUUID },
             {"nbt", ReadNBT },
+            {"nbtByteArray", ReadNBTByteArray },
         };
 
         public static readonly Dictionary<string, Func<BinaryReader, List<PacketField>, object>> ComplexDecoders = new Dictionary<string, Func<BinaryReader, List<PacketField>, object>>()
