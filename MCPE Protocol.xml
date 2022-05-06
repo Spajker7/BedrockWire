@@ -55,6 +55,69 @@
 				<field name="Caused By Rider" type="bool"/>
 			</field>
 		</type>
+		<type name="transactionRecords">
+			<field name="Records" type="listUVarInt">
+				<field name="Source Type" type="varint" switch="">
+					<field name="Inventory Id" type="varint" case="0"/>
+					<field name="Flags" type="uvarint" case="2"/>
+					<field name="Action" type="varint" case="100"/>
+					<field name="Action" type="varint" case="99999"/>
+				</field>
+				<field name="Slot" type="uvarint"/>
+				<field name="OldItem" type="item"/>
+				<field name="NewItem" type="item"/>
+			</field>
+		</type>
+		<type name="normalTransaction">
+			<field name="Records" type="transactionRecords" />
+		</type>
+		<type name="inventoryMismatchTransaction">
+			<field name="Records" type="transactionRecords" />
+		</type>
+		<type name="itemUseTransaction">
+			<field name="Records" type="transactionRecords" />
+			<field name="Action Type" type="uvarint" />
+			<field name="Position" type="posVarint" />
+			<field name="Face" type="varint" />
+			<field name="Slot" type="varint" />
+			<field name="Item" type="item" />
+			<field name="From Position" type="posFloat" />
+			<field name="Click Position" type="posFloat" />
+			<field name="Block Runtime Id" type="uvarint" />
+		</type>
+		<type name="itemUseOnEntityTransaction">
+			<field name="Records" type="transactionRecords" />
+			<field name="Entity Id" type="uvarlong" />
+			<field name="Action Type" type="uvarint" />
+			<field name="Slot" type="varint" />
+			<field name="Item" type="item" />
+			<field name="From Position" type="posFloat" />
+			<field name="Click Position" type="posFloat" />
+		</type>
+		<type name="itemReleaseTransaction">
+			<field name="Records" type="transactionRecords" />
+			<field name="Action Type" type="uvarint" />
+			<field name="Slot" type="varint" />
+			<field name="Item" type="item" />
+			<field name="From Position" type="posFloat" />
+		</type>
+		<type name="transaction">
+			<field name="Request Id" type="varint" conditional="!0">
+				<field name="Records" type="listUVarInt">
+					<field name="Container Id" type="byte"/>
+					<field name="Slots" type="listUVarInt">
+						<field name="Slot" type="byte"/>
+					</field>
+				</field>
+			</field>
+			<field name="Transaction Type" type="varint" switch="">
+				<field name="Normal Transaction" type="normalTransaction" ignoreContainer="true" case="0" />
+				<field name="Inventory Mismatch Transaction" type="inventoryMismatchTransaction" ignoreContainer="true" case="1"/>
+				<field name="Item Use Transaction" type="itemUseTransaction" ignoreContainer="true" case="2"/>
+				<field name="Item Use On Entity Transaction" type="itemUseOnEntityTransaction" ignoreContainer="true" case="3"/>
+				<field name="Item Release" type="itemReleaseTransaction" ignoreContainer="true" case="4"/>
+			</field>
+		</type>
 	</types>
 	<packets>
 		<packet id="0x01" name="MCPE_LOGIN">
@@ -193,9 +256,14 @@
 			<field name="Pitch" type="float" />
 			<field name="Yaw" type="float" />
 			<field name="Head Yaw" type="float" />
-			<field name="Attributes" type="EntityAttributes" />
-			<field name="Metadata" type="MetadataDictionary" />
-			<field name="Links" type="EntityLinks" />
+			<field name="Attributes" type="listUVarInt" >
+				<field name="Name" type="string" />
+				<field name="Min Value" type="float" />
+				<field name="Value" type="float" />
+				<field name="Max Value" type="float" />
+			</field>
+			<field name="Metadata" type="metadataDirectory" />
+			<field name="Links" type="entityLinks" />
 		</packet>
 
 		<packet id="0x0e" name="MCPE_REMOVE_ENTITY">
@@ -212,7 +280,7 @@
 			<field name="Speed X" type="float" />
 			<field name="Speed Y" type="float" />
 			<field name="Speed Z" type="float" />
-			<field name="Metadata" type="MetadataDictionary" />
+			<field name="Metadata" type="metadataDictionary" />
 			<field name="Is From Fishing" type="bool" />
 		</packet>
 
@@ -277,7 +345,7 @@
 				<enum id="All" value="(Neighbors | Network)" />
 				<enum id="All Priority" value="(All | Priority)" />
 			</enums>
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Block Runtime ID" type="uvarint" />
 			<field name="Block Priority" type="uvarint" />
 			<field name="Storage" type="uvarint" />
@@ -286,7 +354,7 @@
 		<packet id="0x16" name="MCPE_ADD_PAINTING">
 			<field name="Entity ID Self" type="varlong" />
 			<field name="Runtime Entity ID" type="uvarlong" />
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Direction" type="varint" />
 			<field name="Title" type="string" />
 		</packet>
@@ -298,7 +366,7 @@
 
 		<packet id="0x18" name="MCPE_LEVEL_SOUND_EVENT_OLD">
 			<field name="Sound ID" type="byte" />
-			<field name="Position" type="Vector3" />
+			<field name="Position" type="posFloat" />
 			<field name="Block Id" type="varint" />
 			<field name="Entity Type" type="varint" />
 			<field name="Is baby mob" type="bool" />
@@ -307,12 +375,12 @@
 
 		<packet id="0x19" name="MCPE_LEVEL_EVENT">
 			<field name="Event ID" type="varint" />
-			<field name="Position" type="Vector3" />
+			<field name="Position" type="posFloat" />
 			<field name="Data" type="varint" />
 		</packet>
 
 		<packet id="0x1a" name="MCPE_BLOCK_EVENT">
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Case 1" type="varint" />
 			<field name="Case 2" type="varint" />
 		</packet>
@@ -339,51 +407,7 @@
 		</packet>
 
 		<packet id="0x1e" name="MCPE_INVENTORY_TRANSACTION">
-			<enums id="Transaction type">
-				<enum id="Normal" value="0" />
-				<enum id="Inventory mismatch" value="1" />
-				<enum id="item use" value="2" />
-				<enum id="item use on entity" value="3" />
-				<enum id="item release" value="4" />
-			</enums>
-			<enums id="Inventory source type">
-				<enum id="Container" value="0" />
-				<enum id="Global" value="1" />
-				<enum id="World interaction" value="2" />
-				<enum id="Creative" value="3" />
-				<enum id="Crafting" value="100" />
-				<enum id="Unspecified" value="99999" />
-			</enums>
-			<enums id="Crafting action">
-				<enum id="Craft Add Ingredient" value="-2" />
-				<enum id="Craft Remove Ingredient" value="-3" />
-				<enum id="Craft Result" value="-4" />
-				<enum id="Craft Use Ingredient" value="-5" />
-				<enum id="Anvil Input" value="-10" />
-				<enum id="Anvil Material" value="-11" />
-				<enum id="Anvil Result" value="-12" />
-				<enum id="Anvil Output" value="-13" />
-				<enum id="Enchant item" value="-15" />
-				<enum id="Enchant lapis" value="-16" />
-				<enum id="Enchant result" value="-17" />
-				<enum id="Drop" value="-100" />
-			</enums>
-			<enums id="item release action">
-				<enum id="Release" value="0" />
-				<enum id="Use" value="1" />
-			</enums>
-			<enums id="item use action">
-				<enum id="Place, ClickBlock" value="0" />
-				<enum id="Use, ClickAir" value="1" />
-				<enum id="Destroy" value="2" />
-			</enums>
-			<enums id="item use on entity action">
-				<enum id="Interact" value="0" />
-				<enum id="Attack" value="1" />
-				<enum id="item interact" value="2" />
-			</enums>
-
-			<field name="Transaction" type="Transaction" />
+			<field name="Transaction" type="transaction" />
 		</packet>
 
 		<packet id="0x1f" name="MCPE_MOB_EQUIPMENT">
@@ -433,7 +457,7 @@
 		<packet id="0x24" name="MCPE_PLAYER_ACTION">
 			<field name="Runtime Entity ID" type="uvarlong" />
 			<field name="Action ID" type="varint" />
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Face" type="varint" />
 		</packet>
 
@@ -445,13 +469,13 @@
 
 		<packet id="0x27" name="MCPE_SET_ENTITY_DATA">
 			<field name="Runtime Entity ID" type="uvarlong" />
-			<field name="Metadata" type="MetadataDictionary" />
+			<field name="Metadata" type="metadataDictionary" />
 			<field name="Tick" type="uvarlong" />
 		</packet>
 
 		<packet id="0x28" name="MCPE_SET_ENTITY_MOTION">
 			<field name="Runtime Entity ID" type="uvarlong" />
-			<field name="Velocity" type="Vector3" />
+			<field name="Velocity" type="posFloat" />
 		</packet>
 
 		<packet id="0x29" name="MCPE_SET_ENTITY_LINK">
@@ -472,9 +496,9 @@
 
 		<packet id="0x2b" name="MCPE_SET_SPAWN_POSITION">
 			<field name="Spawn Type" type="varint" />
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Dimension" type="varint" />
-			<field name="Unknown coordinates" type="BlockCoordinates" />
+			<field name="Unknown coordinates" type="posVarint" />
 		</packet>
 
 		<packet id="0x2c" name="MCPE_ANIMATE">
@@ -498,7 +522,7 @@
 		<packet id="0x2e" name="MCPE_CONTAINER_OPEN">
 			<field name="Window ID" type="byte" />
 			<field name="Type" type="byte" />
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Runtime Entity ID" type="varlong" />
 		</packet>
 
@@ -608,7 +632,7 @@
 		</packet>
 
 		<packet id="0x38" name="MCPE_BLOCK_ENTITY_DATA">
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="NamedTag" type="Nbt" />
 		</packet>
 
@@ -622,10 +646,14 @@
 		<packet id="0x3a" name="MCPE_LEVEL_CHUNK">
 			<field name="Chunk X" type="varint" />
 			<field name="Chunk Z" type="varint" />
-			<!--<field name="Sub Chunk Count" type="uvarint" />
-		<field name="Cache Enabled" type="bool" />-->
-			<!--<field name="Blob Hashes" type="ulong[]" />
-		<field name="Chunk Data" type="ByteArray" />-->
+			<field name="Sub Chunk Count" type="uvarint" conditional="4294967294" >
+				<field name="Real Sub Chunk Count" type="short" />
+			</field>
+			<field name="Cache Enabled" type="bool" />
+			<field name="Blob Hashes" type="listUVarInt" >
+				<field name="Blob Hash" type="long" />
+			</field>
+			<field name="Chunk Data" type="byteArray" />
 		</packet>
 
 		<packet id="0x3b" name="MCPE_SET_COMMANDS_ENABLED">
@@ -638,7 +666,7 @@
 
 		<packet id="0x3d" name="MCPE_CHANGE_DIMENSION">
 			<field name="Dimension" type="varint" />
-			<field name="Position" type="Vector3" />
+			<field name="Position" type="posFloat" />
 			<field name="Respawn" type="bool" />
 		</packet>
 
@@ -662,7 +690,7 @@
 		</packet>
 
 		<packet id="0x42" name="MCPE_SPAWN_EXPERIENCE_ORB">
-			<field name="Position" type="Vector3" />
+			<field name="Position" type="posFloat" />
 			<field name="Count" type="varint" />
 		</packet>
 
@@ -683,7 +711,7 @@
 		</packet>
 
 		<packet id="0x47" name="MCPE_item_FRAME_DROP_item">
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 		</packet>
 
 		<packet id="0x48" name="MCPE_GAME_RULES_CHANGED">
@@ -791,7 +819,7 @@
 
 		<packet id="0x56" name="MCPE_PLAY_SOUND">
 			<field name="Name" type="string" />
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Volume" type="float" />
 			<field name="Pitch" type="float" />
 		</packet>
@@ -930,7 +958,7 @@
 		</packet>
 
 		<packet id="0x6e" name="MCPE_UPDATE_BLOCK_SYNCED">
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Block Runtime ID" type="uvarint" />
 			<field name="Block Priority" type="uvarint" />
 			<field name="Data Layer ID" type="uvarint" />
@@ -971,7 +999,7 @@
 		<packet id="0x76" name="MCPE_SPAWN_PARTICLE_EFFECT">
 			<field name="Dimension ID" type="byte" />
 			<field name="Entity ID" type="varlong" />
-			<field name="Position" type="Vector3" />
+			<field name="Position" type="posFloat" />
 			<field name="Particle name" type="string" />
 			<field name="Molang Variables Json" type="string" />
 		</packet>
@@ -982,7 +1010,7 @@
 
 		<packet id="0x78" name="MCPE_LEVEL_SOUND_EVENT_V2">
 			<field name="Sound ID" type="byte" />
-			<field name="Position" type="Vector3" />
+			<field name="Position" type="posFloat" />
 			<field name="Block Id" type="varint" />
 			<field name="Entity Type" type="string" />
 			<field name="Is baby mob" type="bool" />
@@ -990,7 +1018,7 @@
 		</packet>
 
 		<packet id="0x79" name="MCPE_NETWORK_CHUNK_PUBLISHER_UPDATE">
-			<field name="Coordinates" type="BlockCoordinates" />
+			<field name="Coordinates" type="posVarint" />
 			<field name="Radius" type="uvarint" />
 		</packet>
 
@@ -1000,7 +1028,7 @@
 
 		<packet id="0x7b" name="MCPE_LEVEL_SOUND_EVENT">
 			<field name="Sound ID" type="uvarint" />
-			<field name="Position" type="Vector3" />
+			<field name="Position" type="posFloat" />
 			<field name="Block Id" type="varint" />
 			<field name="Entity Type" type="string" />
 			<field name="Is baby mob" type="bool" />
@@ -1120,8 +1148,11 @@
 			<field name="Reason" type="string" />
 		</packet>
 
-		<packet id="0xa2" name="MCPE_item_COMPONENT">
-			<field name="Entries" type="itemComponentList" />
+		<packet id="0xa2" name="MCPE_ITEM_COMPONENT">
+			<field name="Entries" type="listUVarInt">
+				<field name="Name" type="string" /> 
+				<field name="NBT" type="nbt"/>
+			</field>
 		</packet>
 
 		<packet id="0xa3" name="MCPE_FILTER_TEXT_PACKET">
@@ -1130,7 +1161,7 @@
 		</packet>
 
 		<packet id="0xac" name="MCPE_UPDATE_SUB_CHUNK_BLOCKS_PACKET">
-			<field name="Subchunk coordinates" type="BlockCoordinates"/>
+			<field name="Subchunk coordinates" type="posVarint"/>
 			<field name="Layer zero updates" type="UpdateSubChunkBlocksPacketEntry[]"/>
 			<field name="Layer one updates" type="UpdateSubChunkBlocksPacketEntry[]"/>
 		</packet>
@@ -1138,13 +1169,13 @@
 		<packet id="0xae" name="MCPE_SUB_CHUNK_PACKET">
 			<field name="Cache enabled" type="bool" />
 			<field name="Dimension" type="VarInt" />
-			<field name="Subchunk coordinates" type="BlockCoordinates"/>
+			<field name="Subchunk coordinates" type="posVarint"/>
 
 		</packet>
 
 		<packet id="0xaf" name="MCPE_SUB_CHUNK_REQUEST_PACKET">
 			<field name="Dimension" type="VarInt" />
-			<field name="Base Position" type="BlockCoordinates"/>
+			<field name="Base Position" type="posVarint"/>
 			<field name="Offsets" type="SubChunkPositionOffset[]"/>
 		</packet>
 
