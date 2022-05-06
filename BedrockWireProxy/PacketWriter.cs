@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +20,8 @@ namespace BedrockWireProxy
 			}
 			else
 			{
-				OutputWriter = new BinaryWriter(new FileStream(output, FileMode.Create));
+				OutputWriter = new BinaryWriter(new DeflateStream(new FileStream(output, FileMode.Create), CompressionMode.Compress));
+				//OutputWriter = new BinaryWriter(new FileStream(output, FileMode.Create));
 			}
 
 			Format = format;

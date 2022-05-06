@@ -82,7 +82,7 @@ namespace BedrockWire.Utils
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ulong ReadRawVarInt64(Stream buf, int maxSize, bool printBytes = false)
+		private static ulong ReadRawVarInt64(BinaryReader buf, int maxSize, bool printBytes = false)
 		{
 			List<byte> bytes = new List<byte>();
 
@@ -180,7 +180,7 @@ namespace BedrockWire.Utils
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static long ReadInt64(Stream stream, bool printBytes = false)
+		public static long ReadInt64(BinaryReader stream, bool printBytes = false)
 		{
 			return (long)ReadRawVarInt64(stream, 10, printBytes);
 		}
@@ -192,7 +192,7 @@ namespace BedrockWire.Utils
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static long ReadSInt64(Stream stream)
+		public static long ReadSInt64(BinaryReader stream)
 		{
 			return DecodeZigZag64(ReadRawVarInt64(stream, 10));
 		}
@@ -204,7 +204,7 @@ namespace BedrockWire.Utils
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong ReadUInt64(Stream stream)
+		public static ulong ReadUInt64(BinaryReader stream)
 		{
 			return ReadRawVarInt64(stream, 10);
 		}

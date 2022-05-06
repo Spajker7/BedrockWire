@@ -26,7 +26,8 @@
 			<Button Command="{Binding OnLoadProtocolCommand}" CommandParameter="{Binding $parent[Window]}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">Load Protocol Definition</Button>
 		</StackPanel>
 		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10">
-			<CheckBox IsChecked="{Binding FilterOutMoveDelta, Mode=OneWayToSource}">Filter out MoveDelta</CheckBox>	
+			<TextBox Width="400" Text="{Binding FilterText, Mode=OneWayToSource}"></TextBox>
+			<CheckBox IsChecked="{Binding FilterOutMoveDelta, Mode=OneWayToSource}">Filter out "noisy" packets</CheckBox>	
 		</StackPanel>
 		<Grid ColumnDefinitions="*, 4, *" >
 			<DataGrid Grid.Column="0" Items="{Binding FilteredPacketList}" SelectedItem="{Binding SelectedPacket}" AutoGenerateColumns="False">

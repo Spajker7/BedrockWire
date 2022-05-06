@@ -1,4 +1,5 @@
 ﻿using BedrockWire.Utils;
+using fNbt;
 using Jose;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -19,6 +20,36 @@ namespace BedrockWire.Models
             return BinaryPrimitives.ReverseEndianness(reader.ReadInt32());
         }
 
+        private static object ReadInt(BinaryReader reader)
+        {
+            return reader.ReadInt32();
+        }
+
+        private static object ReadShortBe(BinaryReader reader)
+        {
+            return BinaryPrimitives.ReverseEndianness(reader.ReadInt16());
+        }
+
+        private static object ReadShort(BinaryReader reader)
+        {
+            return reader.ReadInt16();
+        }
+
+        private static object ReadLong(BinaryReader reader)
+        {
+            return reader.ReadInt64();
+        }
+
+        private static object ReadLongBE(BinaryReader reader)
+        {
+            return BinaryPrimitives.ReverseEndianness(reader.ReadInt64());
+        }
+
+        private static object ReadFloat(BinaryReader reader)
+        {
+            return reader.ReadSingle();
+        }
+
         private static object ReadByte(BinaryReader reader)
         {
             return reader.ReadByte();
@@ -37,6 +68,21 @@ namespace BedrockWire.Models
         private static object ReadUnsignedVarInt(BinaryReader reader)
         {
             return VarInt.ReadUInt32(reader);
+        }
+
+        private static object ReadVarInt(BinaryReader reader)
+        {
+            return VarInt.ReadSInt32(reader);
+        }
+
+        private static object ReadUnsignedVarLong(BinaryReader reader)
+        {
+            return VarInt.ReadUInt64(reader);
+        }
+
+        private static object ReadVarLong(BinaryReader reader)
+        {
+            return VarInt.ReadSInt64(reader);
         }
 
         private static object ReadString(BinaryReader reader)
@@ -90,17 +136,101 @@ namespace BedrockWire.Models
             return JsonConvert.DeserializeObject<Dictionary<object, object>>(JWT.Payload((string)ReadString32(reader)));
         }
 
+        private static object ReadUUID(BinaryReader reader)
+        {
+            byte[] uuid = reader.ReadBytes(16);
+            var _a = BitConverter.ToUInt64(uuid.Skip(0).Take(8).Reverse().ToArray(), 0);
+            var _b = BitConverter.ToUInt64(uuid.Skip(8).Take(8).Reverse().ToArray(), 0);
+            var bytes = BitConverter.GetBytes(_a).Concat(BitConverter.GetBytes(_b)).ToArray();
+            string hex = string.Join("", bytes.Select(b => b.ToString("x2")));
+            return hex.Substring(0, 8) + "-" + hex.Substring(8, 4) + "-" + hex.Substring(12, 4) + "-" + hex.Substring(16, 4) + "-" + hex.Substring(20, 12);
+        }
+
+        private static object ReadNBT(BinaryReader reader)
+        {
+            NbtFile nbtFile = new NbtFile();
+            nbtFile.BigEndian = false;
+            nbtFile.UseVarInt = true;
+            nbtFile.AllowAlternativeRootTag = true;
+
+            nbtFile.LoadFromStream(reader.BaseStream, NbtCompression.None);
+            return nbtFile.RootTag.ToString();
+        }
+
+        
+        private static object ReadList16(BinaryReader reader, List<PacketField> subFields)
+        {
+            int count = reader.ReadInt16();
+            Dictionary<object, object> list = new Dictionary<object, object>();
+
+            for(int i = 0; i < count; i++)
+            {
+                PacketDecoder decoder = new PacketDecoder() { Fields = subFields };
+                list.Add(i, decoder.Decode(reader));
+
+            }
+            return list;
+        }
+
+        private static object ReadListUVarInt(BinaryReader reader, List<PacketField> subFields)
+        {
+            int count = (int) VarInt.ReadUInt32(reader);
+            Dictionary<object, object> list = new Dictionary<object, object>();
+
+            for (int i = 0; i < count; i++)
+            {
+                PacketDecoder decoder = new PacketDecoder() { Fields = subFields };
+                list.Add(i, decoder.Decode(reader));
+
+            }
+            return list;
+        }
+
+        private static object ReadListInt(BinaryReader reader, List<PacketField> subFields)
+        {
+            int count = reader.ReadInt32();
+            Dictionary<object, object> list = new Dictionary<object, object>();
+
+            for (int i = 0; i < count; i++)
+            {
+                PacketDecoder decoder = new PacketDecoder() { Fields = subFields };
+                list.Add(i, decoder.Decode(reader));
+
+            }
+            return list;
+        }
+
         public static readonly Dictionary<string, Func<BinaryReader, object>> Decoders = new Dictionary<string, Func<BinaryReader, object>>()
         {
+            {"shortBE", ReadShortBe},
+            {"short", ReadShort},
             {"intBE", ReadIntBe},
+            {"int", ReadInt},
+            {"long", ReadLong},
+            {"longBE", ReadLongBE},
+            {"float", ReadFloat},
             {"bool", ReadBool},
             {"string", ReadString},
             {"byteArray", ReadByteArray },
             {"byte", ReadByte },
             {"uvarint", ReadUnsignedVarInt },
+            {"varint", ReadVarInt },
+            {"uvarlong", ReadUnsignedVarLong },
+            {"varlong", ReadVarLong },
             {"json", ReadJson },
             {"jsonJwtArrayChain", ReadJsonJwtArrayChain },
-            {"jwt", ReadJwt }
+            {"jwt", ReadJwt },
+            {"uuid", ReadUUID },
+            {"nbt", ReadNBT },
         };
+
+        public static readonly Dictionary<string, Func<BinaryReader, List<PacketField>, object>> ComplexDecoders = new Dictionary<string, Func<BinaryReader, List<PacketField>, object>>()
+        {
+            {"list16", ReadList16 },
+            {"listUVarInt", ReadListUVarInt },
+            {"listInt", ReadListInt },
+        };
+
+        public static Dictionary<string, PacketDecoder> CustomDecoders = new Dictionary<string, PacketDecoder>();
     }
 }
