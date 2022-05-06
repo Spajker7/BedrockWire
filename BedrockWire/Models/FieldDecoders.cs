@@ -166,7 +166,7 @@ namespace BedrockWire.Models
             for(int i = 0; i < count; i++)
             {
                 PacketDecoder decoder = new PacketDecoder() { Fields = subFields };
-                list.Add(i, decoder.Decode(reader));
+                list.Add(i, decoder.Decode(reader).Result);
 
             }
             return list;
@@ -180,7 +180,7 @@ namespace BedrockWire.Models
             for (int i = 0; i < count; i++)
             {
                 PacketDecoder decoder = new PacketDecoder() { Fields = subFields };
-                list.Add(i, decoder.Decode(reader));
+                list.Add(i, decoder.Decode(reader).Result);
 
             }
             return list;
@@ -194,7 +194,7 @@ namespace BedrockWire.Models
             for (int i = 0; i < count; i++)
             {
                 PacketDecoder decoder = new PacketDecoder() { Fields = subFields };
-                list.Add(i, decoder.Decode(reader));
+                list.Add(i, decoder.Decode(reader).Result);
 
             }
             return list;

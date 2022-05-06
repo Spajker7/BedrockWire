@@ -15,6 +15,6 @@ namespace BedrockWire.Models
         public ulong Length { get; set; }
         public byte[] Payload { get; set; }
         public Dictionary<object, object> Decoded { get; set; }
-        public bool HasError { get; set; }
+        public string Error { get; set; }
     }
 }

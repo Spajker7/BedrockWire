@@ -13,9 +13,7 @@ namespace BedrockWire
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            bool hasError = (bool)value;
-            
-            if(hasError)
+            if(value != null)
             {
                 return new SolidColorBrush(Color.Parse("#E6534E"));
             }

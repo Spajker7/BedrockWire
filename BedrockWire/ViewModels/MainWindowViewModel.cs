@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Xml;
 
@@ -15,7 +16,7 @@ namespace BedrockWire.ViewModels
     {
         public List<Packet> PacketList { get; set; }
         public ObservableCollection<Packet> FilteredPacketList { get; set; }
-        private Dictionary<int, PacketDefinition> PacketDefintions { get; set; }
+        private Dictionary<int, PacketDefinition> PacketDefinitions { get; set; }
 
         private bool filterOutMoveDelta;
         public bool FilterOutMoveDelta
@@ -45,10 +46,55 @@ namespace BedrockWire.ViewModels
             set => this.RaiseAndSetIfChanged(ref selectedPacket, value);
         }
 
+        public string StatusText { get; set; }
+
         public MainWindowViewModel()
         {
             PacketList = new List<Packet>();
             FilteredPacketList = new ObservableCollection<Packet>();
+            PacketDefinitions = new Dictionary<int, PacketDefinition>();
+            UpdateStatusText();
+        }
+
+        private void DecodePacket(Packet packet)
+        {
+            packet.Name = "UNKNOWN_PACKET";
+            if (PacketDefinitions != null && PacketDefinitions.ContainsKey(packet.Id))
+            {
+                packet.Name = PacketDefinitions[packet.Id].Name;
+
+                try
+                {
+                    using (MemoryStream stream = new MemoryStream(packet.Payload))
+                    {
+                        using (BinaryReader reader2 = new BinaryReader(stream))
+                        {
+                            var res = PacketDefinitions[packet.Id].PacketDecoder.Decode(reader2);
+                            packet.Decoded = res.Result;
+                            packet.Error = res.Error;
+                            if (packet.Error == null && stream.Position != stream.Length)
+                            {
+                                packet.Error = (stream.Length - stream.Position) + " bytes left unread";
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    packet.Error = ex.Message;
+                }
+            }
+            else
+            {
+                packet.Error = "Unknown packet id: " + packet.Id;
+            }
+        }
+
+        private void UpdateStatusText()
+        {
+            StatusText = "Loaded " + PacketDefinitions.Count + " packet definitions. Showing " + FilteredPacketList.Count + "/" + PacketList.Count + " packets. " + PacketList.Where(p => p.Error != null).Count() + "/" + PacketList.Count + " have errors.";
+            this.RaisePropertyChanged(nameof(StatusText));
         }
 
         public async void OnOpenCommand(Window window)
@@ -76,43 +122,11 @@ namespace BedrockWire.ViewModels
                             byte[] payload = reader.ReadBytes(length);
 
                             string name = "UNKNOWN_PACKET";
-                            bool hasError = true;
+                            
 
-                            Dictionary<object, object>? data = new Dictionary<object, object>();
-
-                            if (PacketDefintions != null && PacketDefintions.ContainsKey(packetId))
-                            {
-                                hasError = false;
-                                name = PacketDefintions[packetId].Name;
-
-                                try
-                                {
-                                    using (MemoryStream stream = new MemoryStream(payload))
-                                    {
-                                        using (BinaryReader reader2 = new BinaryReader(stream))
-                                        {
-                                            data = PacketDefintions[packetId].PacketDecoder.Decode(reader2);
-                                            if (stream.Position != stream.Length)
-                                            {
-                                                hasError = true;
-                                            }
-                                        }
-                                    }
-
-                                }
-                                catch (Exception ex)
-                                {
-                                    hasError = true;
-                                }
-
-                                if (data == null)
-                                {
-                                    data = new Dictionary<object, object>();
-                                    hasError = true;
-                                }
-                            }
-
-                            PacketList.Add(new Packet() { Direction = direction == 0 ? "C -> S" : "S -> C", Id = packetId, Name = name, Payload = payload, Decoded = data, HasError = hasError, Time = time, Length = (ulong)length });
+                            var packet = new Packet() { Direction = direction == 0 ? "C -> S" : "S -> C", Id = packetId, Payload = payload, Time = time, Length = (ulong)length };
+                            DecodePacket(packet);
+                            PacketList.Add(packet);
                         }
 
                     }
@@ -161,6 +175,8 @@ namespace BedrockWire.ViewModels
 
                 FilteredPacketList.Add(packet);
             }
+
+            UpdateStatusText();
         }
 
         private PacketField ParseField(XmlNode node)
@@ -191,10 +207,12 @@ namespace BedrockWire.ViewModels
             var result = await dlg.ShowAsync(window);
             if (result != null && result.Length > 0)
             {
-                PacketDefintions = new Dictionary<int, PacketDefinition>();
+                PacketDefinitions = new Dictionary<int, PacketDefinition>();
 
                 XmlDocument doc = new XmlDocument();
                 doc.Load(result[0]);
+
+                FieldDecoders.CustomDecoders.Clear();
 
                 foreach (XmlNode node in doc.DocumentElement.SelectNodes("child::types")[0])
                 {
@@ -231,9 +249,16 @@ namespace BedrockWire.ViewModels
                             decoder.Fields.Add(ParseField(fieldNode));
                         }
 
-                        PacketDefintions[id] = new PacketDefinition() { Name = name, PacketDecoder = decoder };
+                        PacketDefinitions[id] = new PacketDefinition() { Name = name, PacketDecoder = decoder };
                     }
                 }
+
+                foreach(Packet packet in PacketList)
+                {
+                    DecodePacket(packet);
+                }
+
+                RefreshFilters();
             }
         }
     }

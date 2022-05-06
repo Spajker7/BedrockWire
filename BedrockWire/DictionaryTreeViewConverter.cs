@@ -2,6 +2,8 @@
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using BedrockWire.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -28,7 +30,7 @@ namespace BedrockWire
                 item.Items = items;
                 item.Header = name;
             }
-            else
+            else if(obj != null)
             {
                 string text = obj.ToString();
                 string original = text;
@@ -48,13 +50,26 @@ namespace BedrockWire
                 item.Header = box;
 
             }
+            else
+            {
+                item.Header = "null";
+            }
 
             return item;
         }
 
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            return new List<TreeViewItem>() { ObjectToTreeViewItem("Root", value) };
+            if(value is Packet p)
+            {
+                if(p.Error != null)
+                {
+                    return new List<TreeViewItem>() { new TreeViewItem() { Header = p.Error, Background = new SolidColorBrush(Color.Parse("#E6534E")) } };
+                }
+
+                return new List<TreeViewItem>() { ObjectToTreeViewItem("Root", p.Decoded) };
+            }
+            return null;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

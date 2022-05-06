@@ -9,9 +9,9 @@ namespace BedrockWire.Models
 {
     public class PacketDecoder
     {
-        public List<PacketField> Fields { get; set; }
+        public List<PacketField>? Fields { get; set; }
 
-        public Dictionary<object, object>? Decode(BinaryReader reader)
+        public (Dictionary<object, object>? Result, string? Error) Decode(BinaryReader reader)
         {
             Dictionary<object, object> packet = new Dictionary<object, object>();
 
@@ -30,12 +30,12 @@ namespace BedrockWire.Models
                 }
                 else if (FieldDecoders.CustomDecoders.ContainsKey(field.Type))
                 {
-                    object value = FieldDecoders.CustomDecoders[field.Type].Decode(reader);
+                    object value = FieldDecoders.CustomDecoders[field.Type].Decode(reader).Result;
                     packet[field.Name] = value;
                 }
                 else
                 {
-                    return null;
+                    return (null, "Unknown type: " + field.Type);
                 }
 
                 var key = field.Name;
@@ -53,7 +53,7 @@ namespace BedrockWire.Models
                     if ((!isNegative && condition.Equals(value)) || (isNegative && !condition.Equals(value)))
                     {
                         PacketDecoder packetDecoder = new PacketDecoder() { Fields = field.SubFields };
-                        packet[field.Name + ": " + value] = packetDecoder.Decode(reader);
+                        packet[field.Name + ": " + value] = packetDecoder.Decode(reader).Result;
                         key = field.Name + ": " + value;
                         packet.Remove(field.Name);
                     }
@@ -61,12 +61,12 @@ namespace BedrockWire.Models
                 else if (field.IsSwitch)
                 {
                     var value = packet[field.Name].ToString();
-                    PacketField elm = field.SubFields.Where(x => x.Case.Equals(value)).LastOrDefault();
+                    PacketField? elm = field.SubFields.Where(x => x.Case.Equals(value)).LastOrDefault();
 
                     if (elm != null)
                     {
                         PacketDecoder packetDecoder = new PacketDecoder() { Fields = new List<PacketField>() { elm } };
-                        packet[field.Name + ": " + value] = packetDecoder.Decode(reader);
+                        packet[field.Name + ": " + value] = packetDecoder.Decode(reader).Result;
                         key = field.Name + ": " + value;
                         packet.Remove(field.Name);
                     }
@@ -86,7 +86,7 @@ namespace BedrockWire.Models
 
             }
 
-            return packet;
+            return (packet, null);
         }
     }
 }
