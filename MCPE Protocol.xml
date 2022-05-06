@@ -17,7 +17,26 @@
 					<field name="Unique Id" type="varint" />
 				</field>
 				<field name="Runtime Id" type="varint" />
-				<field name="NBT" type="byteArray" />
+				<field name="nbt" type="byteArray" />
+			</field>
+		</type>
+		<type name="itemNonUnique">
+			<field name="Id" type="varint" conditional="!0">
+				<field name="Count" type="short" />
+				<field name="MetaData" type="uvarint" />
+				<field name="Runtime Id" type="varint" />
+				<field name="nbt" type="byteArray" />
+			</field>
+		</type>
+		<type name="itemStacks">
+			<field name="Items" type="listUVarInt">
+				<field name="Item" type="item" />
+			</field>
+		</type>
+		<type name="creativeitemStacks">
+			<field name="Items" type="listUVarInt">
+				<field name="Network Id" type="varint" />
+				<field name="Item" type="itemNonUnique" />
 			</field>
 		</type>
 		<type name="metadataDictionary">
@@ -46,6 +65,11 @@
 			<field name="Y" type="float"/>
 			<field name="Z" type="float"/>
 		</type>
+		<type name="posByte">
+			<field name="X" type="byte"/>
+			<field name="Y" type="byte"/>
+			<field name="Z" type="byte"/>
+		</type>
 		<type name="entityLinks">
 			<field name="entityLinks" type="listUVarInt" ignoreContainer="true">
 				<field name="From" type="uvarlong"/>
@@ -57,10 +81,10 @@
 		</type>
 		<type name="transactionRecords">
 			<field name="Records" type="listUVarInt">
-				<field name="Source Type" type="varint" switch="">
+				<field name="Source Type" type="uvarint" switch="">
 					<field name="Inventory Id" type="varint" case="0"/>
 					<field name="Flags" type="uvarint" case="2"/>
-					<field name="Action" type="varint" case="100"/>
+					<!--<field name="Action" type="varint" case="100"/>-->
 					<field name="Action" type="varint" case="99999"/>
 				</field>
 				<field name="Slot" type="uvarint"/>
@@ -110,7 +134,7 @@
 					</field>
 				</field>
 			</field>
-			<field name="Transaction Type" type="varint" switch="">
+			<field name="Transaction Type" type="uvarint" switch="">
 				<field name="Normal Transaction" type="normalTransaction" ignoreContainer="true" case="0" />
 				<field name="Inventory Mismatch Transaction" type="inventoryMismatchTransaction" ignoreContainer="true" case="1"/>
 				<field name="Item Use Transaction" type="itemUseTransaction" ignoreContainer="true" case="2"/>
@@ -633,7 +657,7 @@
 
 		<packet id="0x38" name="MCPE_BLOCK_ENTITY_DATA">
 			<field name="Coordinates" type="posVarint" />
-			<field name="NamedTag" type="Nbt" />
+			<field name="NamedTag" type="nbt" />
 		</packet>
 
 		<packet id="0x39" name="MCPE_PLAYER_INPUT">
@@ -778,7 +802,7 @@
 			<field name="Trader Entity ID" type="varlong" />
 			<field name="Player Entity ID" type="varlong" />
 			<field name="Display Name" type="string" />
-			<field name="NamedTag" type="Nbt" />
+			<field name="NamedTag" type="nbt" />
 		</packet>
 
 		<packet id="0x51" name="MCPE_UPDATE_EQUIPMENT">
@@ -786,7 +810,7 @@
 			<field name="Window Type" type="byte" />
 			<field name="Unknown" type="byte" />
 			<field name="Entity ID" type="varlong" />
-			<field name="NamedTag" type="Nbt" />
+			<field name="NamedTag" type="nbt" />
 		</packet>
 
 		<packet id="0x52" name="MCPE_RESOURCE_PACK_DATA_INFO">
@@ -1005,7 +1029,7 @@
 		</packet>
 
 		<packet id="0x77" name="MCPE_AVAILABLE_ENTITY_IDENTIFIERS">
-			<field name="NamedTag" type="Nbt" />
+			<field name="NamedTag" type="nbt" />
 		</packet>
 
 		<packet id="0x78" name="MCPE_LEVEL_SOUND_EVENT_V2">
@@ -1023,7 +1047,7 @@
 		</packet>
 
 		<packet id="0x7a" name="MCPE_BIOME_DEFINITION_LIST">
-			<field name="NamedTag" type="Nbt" />
+			<field name="NamedTag" type="nbt" />
 		</packet>
 
 		<packet id="0x7b" name="MCPE_LEVEL_SOUND_EVENT">
@@ -1066,7 +1090,7 @@
 		</packet>
 
 		<packet id="0x86" name="MCPE_UPDATE_BLOCK_PROPERTIES">
-			<field name="NamedTag" type="Nbt" />
+			<field name="NamedTag" type="nbt" />
 		</packet>
 
 		<packet id="0x87" name="MCPE_CLIENT_CACHE_BLOB_STATUS">
@@ -1092,7 +1116,7 @@
 		</packet>
 
 		<packet id="0x91" name="MCPE_CREATIVE_CONTENT">
-			<field name="Input" type="CreativeitemStacks" />
+			<field name="Input" type="creativeitemStacks" />
 		</packet>
 
 		<!--
@@ -1151,7 +1175,7 @@
 		<packet id="0xa2" name="MCPE_ITEM_COMPONENT">
 			<field name="Entries" type="listUVarInt">
 				<field name="Name" type="string" /> 
-				<field name="NBT" type="nbt"/>
+				<field name="nbt" type="nbt"/>
 			</field>
 		</packet>
 
@@ -1168,15 +1192,17 @@
 
 		<packet id="0xae" name="MCPE_SUB_CHUNK_PACKET">
 			<field name="Cache enabled" type="bool" />
-			<field name="Dimension" type="VarInt" />
+			<field name="Dimension" type="varint" />
 			<field name="Subchunk coordinates" type="posVarint"/>
 
 		</packet>
 
 		<packet id="0xaf" name="MCPE_SUB_CHUNK_REQUEST_PACKET">
-			<field name="Dimension" type="VarInt" />
+			<field name="Dimension" type="varint" />
 			<field name="Base Position" type="posVarint"/>
-			<field name="Offsets" type="SubChunkPositionOffset[]"/>
+			<field name="Offsets" type="listInt">
+				<field name="Offset" type="posByte"/>
+			</field>
 		</packet>
 
 		<packet id="0xb4" name="MCPE_DIMENSION_DATA">
