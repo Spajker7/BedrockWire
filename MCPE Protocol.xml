@@ -241,7 +241,6 @@
 			<field name="Item" type="item" />
 			<field name="Game Type" type="varint" />
 			<field name="Metadata" type="metadataDictionary" />
-
 			<field name="Flags" type="uvarint" />
 			<field name="Command permission" type="uvarint" />
 			<field name="Action Permissions" type="uvarint" />
@@ -253,20 +252,6 @@
 			<field name="Device OS" type="int" />
 		</packet>
 
-
-		<!--
-		TODO: Links
-			count short
-			loop
-				link[0] long
-				link[1] long
-				link[2] byte
-		TODO: Modifiers
-			count int
-				name string
-				val1 float
-				val2 float
-		-->
 		<packet id="0x0d" name="MCPE_ADD_ENTITY">
 			<field name="Entity ID Self" type="varlong" />
 			<field name="Runtime Entity ID" type="uvarlong" />
@@ -286,7 +271,7 @@
 				<field name="Value" type="float" />
 				<field name="Max Value" type="float" />
 			</field>
-			<field name="Metadata" type="metadataDirectory" />
+			<field name="Metadata" type="metadataDictionary" />
 			<field name="Links" type="entityLinks" />
 		</packet>
 
@@ -322,26 +307,6 @@
 		</packet>
 
 		<packet id="0x13" name="MCPE_MOVE_PLAYER">
-
-			<enums id="Mode">
-				<enum id="Normal" value="0" />
-				<enum id="Reset" value="1" />
-				<enum id="Teleport" value="2" />
-				<enum id="Rotation" value="3" />
-			</enums>
-
-			<!--
-		These are sent at the end of the packet IF Telport mode is selected.
-		-->
-			<enums id="TeleportCause">
-				<enum id="Unknown" value="0" />
-				<enum id="Projectile" value="1" />
-				<enum id="Chorus Fruit" value="2" />
-				<enum id="Command" value="3" />
-				<enum id="Behavior" value="4" />
-				<enum id="Count" value="5" />
-			</enums>
-
 			<field name="Runtime Entity ID" type="uvarlong" />
 			<field name="X" type="float" />
 			<field name="Y" type="float" />
@@ -359,16 +324,6 @@
 		</packet>
 
 		<packet id="0x15" name="MCPE_UPDATE_BLOCK">
-			<enums id="Flags">
-				<enum id="None" value="0" />
-				<enum id="Neighbors" value="1" />
-				<enum id="Network" value="2" />
-				<enum id="Nographic" value="4" />
-				<enum id="Priority" value="8" />
-
-				<enum id="All" value="(Neighbors | Network)" />
-				<enum id="All Priority" value="(All | Priority)" />
-			</enums>
 			<field name="Coordinates" type="posVarint" />
 			<field name="Block Runtime ID" type="uvarint" />
 			<field name="Block Priority" type="uvarint" />
@@ -426,7 +381,13 @@
 
 		<packet id="0x1d" name="MCPE_UPDATE_ATTRIBUTES">
 			<field name="Runtime Entity ID" type="uvarlong" />
-			<field name="Attributes" type="PlayerAttributes" />
+			<field name="Attributes" type="listUVarInt">
+				<field name="MinValue" type="float" />
+				<field name="MaxValue" type="float" />
+				<field name="Value" type="float" />
+				<field name="Default" type="float" />
+				<field name="Name" type="string" />
+			</field>
 			<field name="Tick" type="uvarlong" />
 		</packet>
 
@@ -451,15 +412,6 @@
 		</packet>
 
 		<packet id="0x21" name="MCPE_INTERACT">
-			<enums id="Actions">
-				<enum id="Right click" value="1" />
-				<enum id="Left click" value="2" />
-				<enum id="Leave vehicle" value="3" />
-				<enum id="Mouse over" value="4" />
-				<enum id="Open NPC" value="5" />
-				<enum id="Open inventory" value="6" />
-			</enums>
-
 			<field name="Action ID" type="byte" />
 			<field name="Target Runtime Entity ID" type="uvarlong" />
 		</packet>
@@ -486,7 +438,7 @@
 		</packet>
 
 		<packet id="0x26" name="MCPE_HURT_ARMOR">
-			<field name="Cause" type="VarInt" />
+			<field name="Cause" type="varint" />
 			<field name="Health" type="varint" />
 			<field name="Armor slot flags" type="uvarlong" />
 		</packet>
@@ -503,11 +455,6 @@
 		</packet>
 
 		<packet id="0x29" name="MCPE_SET_ENTITY_LINK">
-			<enums id="Link Actions">
-				<enum id="Remove" value="0" />
-				<enum id="Ride" value="1" />
-				<enum id="Passenger" value="2" />
-			</enums>
 			<field name="Ridden ID" type="varlong" />
 			<field name="Rider ID" type="varlong" />
 			<field name="Link Type" type="byte" />
@@ -531,11 +478,6 @@
 		</packet>
 
 		<packet id="0x2d" name="MCPE_RESPAWN">
-			<enums id="Respawn State">
-				<enum id="Search" value="0" />
-				<enum id="Ready" value="1" />
-				<enum id="Client Ready" value="2" />
-			</enums>
 			<field name="X" type="float" />
 			<field name="Y" type="float" />
 			<field name="Z" type="float" />
@@ -587,17 +529,6 @@
 		</packet>
 
 		<packet id="0x35" name="MCPE_CRAFTING_EVENT">
-			<enums id="Recipe Types">
-				<enum id="Shapeless" value="0" />
-				<enum id="Shaped" value="1" />
-				<enum id="Furnace" value="2" />
-				<enum id="Furnace data" value="3" />
-				<enum id="Multi" value="4" />
-				<enum id="Shulker box" value="5" />
-				<enum id="Chemistry Shapeless" value="6" />
-				<enum id="Chemistry Shaped" value="7" />
-			</enums>
-
 			<field name="Window ID" type="byte" />
 			<field name="Recipe Type" type="varint" />
 			<field name="Recipe ID" type="UUID" />
@@ -605,46 +536,9 @@
 			<field name="Result" type="itemStacks" />
 		</packet>
 
-		<packet id="0x36" name="MCPE_GUI_DATA_PICK_item">
+		<packet id="0x36" name="MCPE_GUI_DATA_PICK_ITEM">
 
 		</packet>
-
-		<enums id="Adventure Flags">
-			<enum id="MayFly" value="0x40" />
-			<enum id="NoClip" value="0x80" />
-			<enum id="WorldBuilder" value="0x100" />
-			<enum id="Flying" value="0x200" />
-			<enum id="Muted" value="0x400" />
-		</enums>
-
-		<enums id="Command Permission">
-			<enum id="Normal" value="0" />
-			<enum id="Operator" value="1" />
-			<enum id="Host" value="2" />
-			<enum id="Automation" value="3" />
-			<enum id="Admin" value="4" />
-		</enums>
-
-		<enums id="Permission Level">
-			<enum id="Visitor" value="0" />
-			<enum id="Member" value="1" />
-			<enum id="Operator" value="2" />
-			<enum id="Custom" value="3" />
-		</enums>
-
-		<enums id="Action Permissions">
-			<enum id="Build And Mine" value="0x1" />
-			<enum id="Doors And Switches" value="0x2" />
-			<enum id="Open Containers" value="0x4" />
-			<enum id="Attack Players" value="0x8" />
-			<enum id="Attack Mobs" value="0x10" />
-			<enum id="Operator" value="0x20" />
-			<enum id="Teleport" value="0x80" />
-
-			<enum id="Default" value="(BuildAndMine | DoorsAndSwitches | OpenContainers | AttackPlayers | AttackMobs )" />
-			<enum id="All"
-				value="(BuildAndMine | DoorsAndSwitches | OpenContainers | AttackPlayers | AttackMobs | Operator | Teleport)" />
-		</enums>
 
 		<packet id="0x37" name="MCPE_ADVENTURE_SETTINGS">
 			<field name="Flags" type="uvarint" />
@@ -699,7 +593,19 @@
 		</packet>
 
 		<packet id="0x3f" name="MCPE_PLAYER_LIST">
-			<field name="Records" type="PlayerRecords" />
+			<field name="Record Type" type="byte" switch="">
+				<field name="Records" type="listUVarInt" case="0">
+					<field name="UUID" type="uuid" />
+					<field name="Entity Id" type="varlong" />
+					<field name="Display Name" type="string" />
+					<field name="XUID" type="string" />
+					<field name="PlatformChatId" type="string" />
+					<field name="DeviceOS" type="int" />
+					<field name="Skin" type="skin" />
+					<field name="IsTeacher" type="bool" />
+					<field name="IsHost" type="bool" />
+				</field>
+			</field>
 		</packet>
 
 		<packet id="0x40" name="MCPE_SIMPLE_EVENT">
