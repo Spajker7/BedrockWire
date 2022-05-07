@@ -7,40 +7,20 @@ using System.Threading.Tasks;
 
 namespace BedrockWire.Models
 {
-    public class PacketDecoder
+    public static class PacketDecoder
     {
-        public List<PacketField>? Fields { get; set; }
-
-        public (Dictionary<object, object>? Result, string? Error) Decode(BinaryReader reader)
+        public static Dictionary<object, object> Decode(BinaryReader reader, List<PacketField> packetFields)
         {
             Dictionary<object, object> packet = new Dictionary<object, object>();
+            Dictionary<string, object> referenceValues = new Dictionary<string, object>();
+            string previousName = null;
+            object previousValue = null;
 
-            foreach (PacketField field in Fields)
+            foreach (PacketField field in packetFields)
             {
-                if (FieldDecoders.Decoders.ContainsKey(field.Type))
-                {
-                    object value = FieldDecoders.Decoders[field.Type](reader);
-                    packet[field.Name] = value;
+                string newName = field.Name;
 
-                }
-                else if (FieldDecoders.ComplexDecoders.ContainsKey(field.Type))
-                {
-                    object value = FieldDecoders.ComplexDecoders[field.Type](reader, field.SubFields);
-                    packet[field.Name] = value;
-                }
-                else if (FieldDecoders.CustomDecoders.ContainsKey(field.Type))
-                {
-                    object value = FieldDecoders.CustomDecoders[field.Type].Decode(reader).Result;
-                    packet[field.Name] = value;
-                }
-                else
-                {
-                    return (null, "Unknown type: " + field.Type);
-                }
-
-                var key = field.Name;
-
-                if (!string.IsNullOrEmpty(field.Conditional))
+                if (!string.IsNullOrEmpty(field.Conditional)) // if field
                 {
                     string condition = field.Conditional;
                     bool isNegative = condition[0] == '!';
@@ -48,45 +28,141 @@ namespace BedrockWire.Models
                     {
                         condition = condition.Substring(1);
                     }
-                    var value = packet[field.Name].ToString();
+
+                    string value = (field.ReferencesId != null ? referenceValues[field.ReferencesId] : previousValue).ToString();
 
                     if ((!isNegative && condition.Equals(value)) || (isNegative && !condition.Equals(value)))
                     {
-                        PacketDecoder packetDecoder = new PacketDecoder() { Fields = field.SubFields };
-                        packet[field.Name + ": " + value] = packetDecoder.Decode(reader).Result;
-                        key = field.Name + ": " + value;
-                        packet.Remove(field.Name);
+                        packet[previousName + ": " + value] = Decode(reader, field.SubFields);
+                        newName = previousName + ": " + value;
+                        packet.Remove(previousName);
                     }
                 }
                 else if (field.IsSwitch)
                 {
-                    var value = packet[field.Name].ToString();
+                    string value = (field.ReferencesId != null ? referenceValues[field.ReferencesId] : previousValue).ToString();
+
                     PacketField? elm = field.SubFields.Where(x => x.Case.Equals(value)).LastOrDefault();
 
                     if (elm != null)
                     {
-                        PacketDecoder packetDecoder = new PacketDecoder() { Fields = new List<PacketField>() { elm } };
-                        packet[field.Name + ": " + value] = packetDecoder.Decode(reader).Result;
-                        key = field.Name + ": " + value;
-                        packet.Remove(field.Name);
+                        packet[previousName + ": " + value] = Decode(reader, elm.SubFields);
+                        newName = previousName + ": " + value;
+                        packet.Remove(previousName);
                     }
                 }
-
-                if (field.IgnoreContainer)
+                else if (field.IsFlags)
                 {
-                    if (packet[key] is Dictionary<object, object> dict)
+                    string strVal = (field.ReferencesId != null ? referenceValues[field.ReferencesId] : previousValue).ToString();
+                    int value;
+                    if (!int.TryParse(strVal, out value))
                     {
-                        packet.Remove(key);
-                        foreach (object key2 in dict.Keys)
+                        throw new Exception("Flags field referenced a non-integer: " + strVal);
+                    }
+
+                    Dictionary<object, object> list = new Dictionary<object, object>();
+                    int i = 0;
+
+                    foreach (PacketField x in field.SubFields)
+                    {
+                        int bitflag;
+
+                        if (x.Case.StartsWith("0x"))
                         {
-                            packet[key2] = dict[key2];
+                            try
+                            {
+                                bitflag = Convert.ToInt32(x.Case, 16);
+                            }
+                            catch (FormatException)
+                            {
+                                throw new Exception("Bit flag field has bad hex: " + x.Case);
+                            }
+                        }
+                        else if (!int.TryParse(x.Case, out bitflag))
+                        {
+                            throw new Exception("Bit flag field has bad number: " + x.Case);
+                        }
+
+                        if((value & bitflag) != 0)
+                        {
+
+                            list.Add(i, Decode(reader, x.SubFields));
+                            i++;
+                        }
+                    }
+
+                    packet[previousName + ": " + strVal] = list;
+                    newName = previousName + ": " + value;
+                    packet.Remove(previousName);
+                }
+                else if (field.IsList)
+                {
+                    string strVal = (field.ReferencesId != null ? referenceValues[field.ReferencesId] : previousValue).ToString();
+                    int value;
+                    if (!int.TryParse(strVal, out value) || value < 0)
+                    {
+                        throw new Exception("List field referenced a non-integer or negative count: " + strVal);
+                    }
+
+                    Dictionary<object, object> list = new Dictionary<object, object>();
+
+                    for (int i = 0; i < value; i++)
+                    {
+                        list.Add(i, Decode(reader, field.SubFields));
+                    }
+
+                    packet[previousName + ": " + strVal] = list;
+                    newName = previousName + ": " + value;
+                    packet.Remove(previousName);
+                }
+
+                if (field.Type != null)
+                {
+                    if (FieldDecoders.Decoders.ContainsKey(field.Type))
+                    {
+                        object value = FieldDecoders.Decoders[field.Type](reader);
+                        packet[field.Name] = value;
+
+                        previousName = field.Name;
+                        previousValue = value;
+                        if (field.ReferenceId != null)
+                        {
+                            referenceValues[field.ReferenceId] = value;
+                        }
+
+                    }
+                    else if (FieldDecoders.CustomDecoders.ContainsKey(field.Type))
+                    {
+                        object value = Decode(reader, FieldDecoders.CustomDecoders[field.Type]);
+                        packet[field.Name] = value;
+
+                        previousName = field.Name;
+                        previousValue = value;
+                        if (field.ReferenceId != null)
+                        {
+                            referenceValues[field.ReferenceId] = value;
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Unknown type: " + field.Type);
+                    }
+
+                    if (field.Name == null)
+                    {
+                        if (packet[newName] is Dictionary<object, object> dict)
+                        {
+                            packet.Remove(newName);
+                            foreach (object key2 in dict.Keys)
+                            {
+                                packet[key2] = dict[key2];
+                            }
                         }
                     }
                 }
-
             }
 
-            return (packet, null);
+            return packet;
         }
     }
 }

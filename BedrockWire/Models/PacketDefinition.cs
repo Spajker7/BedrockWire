@@ -13,6 +13,6 @@ namespace BedrockWire.Models
     public class PacketDefinition
     {
         public string Name { get; set; }
-        public PacketDecoder PacketDecoder { get; set; }
+        public List<PacketField> Fields { get; set; }
     }
 }

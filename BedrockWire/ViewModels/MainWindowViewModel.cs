@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -73,10 +74,8 @@ namespace BedrockWire.ViewModels
                     {
                         using (BinaryReader reader2 = new BinaryReader(stream))
                         {
-                            var res = PacketDefinitions[packet.Id].PacketDecoder.Decode(reader2);
-                            packet.Decoded = res.Result;
-                            packet.Error = res.Error;
-                            if (packet.Error == null && stream.Position != stream.Length)
+                            packet.Decoded = PacketDecoder.Decode(reader2, PacketDefinitions[packet.Id].Fields);
+                            if (stream.Position != stream.Length)
                             {
                                 packet.Error = (stream.Length - stream.Position) + " bytes left unread";
                             }
@@ -145,7 +144,6 @@ namespace BedrockWire.ViewModels
 
                             string name = "UNKNOWN_PACKET";
 
-
                             var packet = new Packet() { Direction = direction == 0 ? "C -> S" : "S -> C", Id = packetId, Payload = payload, Time = time, Length = (ulong)length };
                             DecodePacket(packet);
 
@@ -158,7 +156,6 @@ namespace BedrockWire.ViewModels
                                     UpdateStatusText();
                                 });
                             }
-
                         }
                     }
                     catch (Exception ex)
@@ -225,18 +222,25 @@ namespace BedrockWire.ViewModels
         private PacketField ParseField(XmlNode node)
         {
             PacketField packetField = new PacketField() {
-                Name = node.Attributes.GetNamedItem("name").InnerText,
-                Type = node.Attributes.GetNamedItem("type").InnerText,
-                IsSwitch = node.Attributes.GetNamedItem("switch") != null,
-                Case = node.Attributes.GetNamedItem("case")?.InnerText,
-                Conditional = node.Attributes.GetNamedItem("conditional")?.InnerText,
+                Name = node.Attributes.GetNamedItem("name")?.InnerText,
+                Type = node.Attributes.GetNamedItem("type")?.InnerText,
+                IsSwitch = node.Name == "switch",
+                IsList = node.Name == "list",
+                IsFlags = node.Name == "flags",
+                Case = node.Name == "case" ? node.Attributes.GetNamedItem("value")?.InnerText : null,
+                Conditional = node.Name == "conditional" ? node.Attributes.GetNamedItem("condition")?.InnerText : null,
+                ReferenceId = node.Attributes.GetNamedItem("refId")?.InnerText,
+                ReferencesId = node.Attributes.GetNamedItem("ref")?.InnerText,
                 SubFields = new List<PacketField>(),
-                IgnoreContainer = bool.Parse(node.Attributes.GetNamedItem("ignoreContainer")?.InnerText ?? "false")
             };
 
-            foreach (XmlNode fieldNode in node.SelectNodes("child::field"))
+            foreach (XmlNode fieldNode in node.ChildNodes)
             {
-                packetField.SubFields.Add(ParseField(fieldNode));
+                if(fieldNode.NodeType == XmlNodeType.Element)
+                {
+                    packetField.SubFields.Add(ParseField(fieldNode));
+                }
+                
             }
 
             return packetField;
@@ -269,16 +273,17 @@ namespace BedrockWire.ViewModels
                     {
                         string name = node.Attributes.GetNamedItem("name").InnerText;
 
+                        List<PacketField> fields = new List<PacketField>();
 
-                        PacketDecoder decoder = new PacketDecoder();
-                        decoder.Fields = new List<PacketField>();
-
-                        foreach (XmlNode fieldNode in node.SelectNodes("child::field"))
+                        foreach (XmlNode fieldNode in node.ChildNodes)
                         {
-                            decoder.Fields.Add(ParseField(fieldNode));
+                            if (fieldNode.NodeType == XmlNodeType.Element)
+                            {
+                                fields.Add(ParseField(fieldNode));
+                            }
                         }
 
-                        FieldDecoders.CustomDecoders.Add(name, decoder);
+                        FieldDecoders.CustomDecoders.Add(name, fields);
                     }
                 }
 
@@ -288,17 +293,18 @@ namespace BedrockWire.ViewModels
                     {
                         int id = Convert.ToInt32(node.Attributes.GetNamedItem("id").InnerText, 16);
                         string name = node.Attributes.GetNamedItem("name").InnerText;
-                        
 
-                        PacketDecoder decoder = new PacketDecoder();
-                        decoder.Fields = new List<PacketField>();
+                        List<PacketField> fields = new List<PacketField>();
 
-                        foreach(XmlNode fieldNode in node.SelectNodes("child::field"))
+                        foreach(XmlNode fieldNode in node.ChildNodes)
                         {
-                            decoder.Fields.Add(ParseField(fieldNode));
+                            if (fieldNode.NodeType == XmlNodeType.Element)
+                            {
+                                fields.Add(ParseField(fieldNode));
+                            }
                         }
 
-                        PacketDefinitions[id] = new PacketDefinition() { Name = name, PacketDecoder = decoder };
+                        PacketDefinitions[id] = new PacketDefinition() { Name = name, Fields = fields };
                     }
                 }
 

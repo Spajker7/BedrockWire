@@ -13,7 +13,10 @@ namespace BedrockWire.Models
         public bool IsSwitch { get; set; }
         public string Conditional { get; set; }
         public string Case { get; set; }
+        public bool IsList { get; set; }
+        public bool IsFlags { get; set; }
+        public string? ReferenceId { get; set; }
+        public string? ReferencesId { get; set; }
         public List<PacketField> SubFields { get; set; }
-        public bool IgnoreContainer { get; set; }
     }
 }
