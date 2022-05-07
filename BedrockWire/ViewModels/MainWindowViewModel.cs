@@ -1,13 +1,17 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using BedrockWire.Models;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Xml;
 
 namespace BedrockWire.ViewModels
@@ -104,12 +108,30 @@ namespace BedrockWire.ViewModels
             dlg.AllowMultiple = false;
 
             var result = await dlg.ShowAsync(window);
-            if(result != null && result.Length > 0)
+            if (result != null && result.Length > 0)
             {
                 PacketList = new List<Packet>();
                 this.RaisePropertyChanged(nameof(PacketList));
 
-                using (BinaryReader reader = new BinaryReader(new DeflateStream(new FileStream(result[0], FileMode.Open), CompressionMode.Decompress)))
+                var stream = new FileStream(result[0], FileMode.Open);
+
+                byte[] header = new byte[4];
+                stream.Read(header, 0, 4);
+
+                if (header[0] != 66 || header[1] != 68 || header[2] != 87)
+                {
+                    return;
+                }
+
+                byte version = header[3];
+
+                if (version != 1)
+                {
+                    return;
+                }
+
+                BinaryReader reader = new BinaryReader(new DeflateStream(stream, CompressionMode.Decompress));
+                new Thread(() =>
                 {
                     try
                     {
@@ -122,21 +144,67 @@ namespace BedrockWire.ViewModels
                             byte[] payload = reader.ReadBytes(length);
 
                             string name = "UNKNOWN_PACKET";
-                            
+
 
                             var packet = new Packet() { Direction = direction == 0 ? "C -> S" : "S -> C", Id = packetId, Payload = payload, Time = time, Length = (ulong)length };
                             DecodePacket(packet);
-                            PacketList.Add(packet);
-                        }
 
+                            PacketList.Add(packet);
+                            if (IsPacketVisible(packet))
+                            {
+                                Dispatcher.UIThread.InvokeAsync(() =>
+                                {
+                                    FilteredPacketList.Add(packet);
+                                    UpdateStatusText();
+                                });
+                            }
+
+                        }
                     }
                     catch (Exception ex)
                     {
                     }
 
-                    RefreshFilters();
+                    Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        RefreshFilters();
+                    });
+                    reader.Close();
+                }).Start();
+            }
+        }
+
+        private bool IsPacketVisible(Packet packet)
+        {
+            if (FilterOutMoveDelta && packet.Id == 111)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(FilterText))
+            {
+                if (FilterText.StartsWith("0x") && FilterText.Length > 2)
+                {
+                    try
+                    {
+                        int id = Convert.ToInt32(FilterText, 16);
+                        if (packet.Id != id)
+                        {
+                            return false;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                    }
+
+                }
+                else if (!packet.Name.Contains(FilterText, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
                 }
             }
+            return true;
+
         }
 
         private void RefreshFilters()
@@ -145,35 +213,10 @@ namespace BedrockWire.ViewModels
 
             foreach(Packet packet in PacketList)
             {
-                if(FilterOutMoveDelta && packet.Id == 111)
+                if(IsPacketVisible(packet))
                 {
-                    continue;
+                    FilteredPacketList.Add(packet);
                 }
-
-                if(!string.IsNullOrEmpty(FilterText))
-                {
-                    if(FilterText.StartsWith("0x") && FilterText.Length > 2)
-                    {
-                        try
-                        {
-                            int id = Convert.ToInt32(FilterText, 16);
-                            if (packet.Id != id)
-                            {
-                                continue;
-                            }
-                        }
-                        catch(Exception)
-                        {
-                        }
-                        
-                    }
-                    else if(!packet.Name.Contains(FilterText, StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-                }
-
-                FilteredPacketList.Add(packet);
             }
 
             UpdateStatusText();

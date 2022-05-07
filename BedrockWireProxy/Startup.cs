@@ -51,9 +51,17 @@ namespace BedrockWireProxy
 			connectionInfo.MaxNumberOfConcurrentConnects = 1;
 
 			connection.Start();
+			
+			CancellationTokenSource tokenSource = new CancellationTokenSource();
 
-			Console.WriteLine("Proxy running. Press <enter> to stop service.");
-			Console.ReadLine();
+			Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs args) { 
+				args.Cancel = true;
+				tokenSource.Cancel(true);
+			};
+
+			packetWriter.StartWriting(tokenSource.Token);
+
+
 			connection.Stop();
 		}
 	}

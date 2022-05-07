@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
@@ -11,32 +12,66 @@ namespace BedrockWireProxy
 	{
 		private BinaryWriter OutputWriter { get;}
 		private string Format { get; }
+        public BlockingCollection<SerializedPacket> Queue { get; set; }
 
-		public PacketWriter(string output, string format)
+        public PacketWriter(string output, string format)
 		{
+			Queue = new BlockingCollection<SerializedPacket>(10000);
+
+			Stream underlyingStream;
+
 			if("stdout".Equals(output, StringComparison.OrdinalIgnoreCase))
 			{
-				OutputWriter = new BinaryWriter(Console.OpenStandardOutput());
+				underlyingStream = Console.OpenStandardOutput();
 			}
 			else
 			{
-				OutputWriter = new BinaryWriter(new DeflateStream(new FileStream(output, FileMode.Create), CompressionMode.Compress));
-				//OutputWriter = new BinaryWriter(new FileStream(output, FileMode.Create));
+				underlyingStream = new FileStream(output, FileMode.Create);
 			}
 
+			byte[] header = { 66, 68, 87 };
+			underlyingStream.Write(header);
+			underlyingStream.WriteByte(1); // version
+
+			OutputWriter = new BinaryWriter(new DeflateStream(underlyingStream, CompressionMode.Compress));
 			Format = format;
 		}
 
-		public void WritePacket(PacketDirection direction, RawMinecraftPacket packet, ulong time)
+		public void StartWriting(CancellationToken cancellationToken)
+        {
+			long lastTimeMs = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
+
+			while(true)
+            {
+				try
+                {
+					var elm = Queue.Take(cancellationToken);
+					OutputWriter.Write((byte) elm.Direction);
+					OutputWriter.Write(elm.Packet.Id);
+					OutputWriter.Write(elm.Time);
+					OutputWriter.Write(elm.Packet.Payload.Length);
+					OutputWriter.Write(elm.Packet.Payload.ToArray());
+
+				}
+				catch(OperationCanceledException)
+                {
+					break;
+				}
+
+				long now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
+
+				if(now - 5000 > lastTimeMs)
+                {
+					lastTimeMs = now;
+					Console.Clear();
+					Console.WriteLine("Packets in queue: " + Queue.Count);
+				}
+            }
+        }
+
+        public void WritePacket(PacketDirection direction, RawMinecraftPacket packet, ulong time)
 		{
-			lock(this)
-			{
-				OutputWriter.Write((byte) direction);
-				OutputWriter.Write(packet.Id);
-				OutputWriter.Write(time);
-				OutputWriter.Write(packet.Payload.Length);
-				OutputWriter.Write(packet.Payload.ToArray());
-			}
+			Queue.Add(new SerializedPacket() { Packet = packet, Time = time , Direction = direction });
 		}
 	}
 }
