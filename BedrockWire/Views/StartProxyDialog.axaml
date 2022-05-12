@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:vm="using:BedrockWire.ViewModels"
+        mc:Ignorable="d"
+        x:Class="BedrockWire.Views.StartProxyDialog"
+        Title="ProxyStartDialog"
+		Width="400"
+		Height="400"
+		WindowState="Normal"
+		HasSystemDecorations="False"
+		WindowStartupLocation="CenterOwner">
+	<Design.DataContext>
+		<vm:StartProxyDialogViewModel/>
+	</Design.DataContext>
+	
+	<Border BorderBrush="Gray" BorderThickness="1">
+		<StackPanel VerticalAlignment="Center">
+			<StackPanel IsVisible="{Binding ShowAuthChoice}">
+				<Button Command="{Binding OnOpenAuthCommand}" CommandParameter="{Binding $parent[Window]}" Margin="10" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Center">Load Auth File</Button>
+				<TextBlock Margin="10" HorizontalAlignment="Center">OR</TextBlock>
+				<Button Command="{Binding OnDeviceAuthCommand}" Margin="10" Width="120" HorizontalContentAlignment="Center" HorizontalAlignment="Center">Authenticate</Button>
+			</StackPanel>
+			<StackPanel IsVisible="{Binding ShowAuthDevice}" VerticalAlignment="Center">
+				<TextBox Margin="10" Width="150" Background="Transparent" BorderThickness="0" IsReadOnly="True" TextWrapping="Wrap" HorizontalAlignment="Center" Text="{Binding UserCode}" ></TextBox>
+				<TextBlock Margin="10" Foreground="Blue" Cursor="Hand" HorizontalAlignment="Center" Text="{Binding VerificationUrl}"></TextBlock>
+				<Button Command="{Binding OnOpenVerificationCommand}" HorizontalAlignment="Center">Open in browser</Button>
+				<TextBlock Margin="10" Foreground="Red" HorizontalAlignment="Center" Text="{Binding AuthDeviceError}"></TextBlock>
+			</StackPanel>
+			<StackPanel IsVisible="{Binding ShowSaveAuth}" VerticalAlignment="Center">
+				<TextBlock Margin="10" HorizontalAlignment="Center">Authentication successful.</TextBlock>
+				<TextBlock Margin="10" HorizontalAlignment="Center">Would you like to save it for future use?</TextBlock>
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
+					<Button Command="{Binding OnSaveAuthCommand}" CommandParameter="{Binding $parent[Window]}">Yes</Button>
+					<Button Command="{Binding OnNotSaveAuthCommand}" CommandParameter="{Binding $parent[Window]}">No</Button>
+				</StackPanel>
+			</StackPanel>
+			<StackPanel IsVisible="{Binding ShowProxySettings}" VerticalAlignment="Center">
+				<TextBlock Margin="10" HorizontalAlignment="Center">Remote server address: </TextBlock>
+				<TextBox Margin="10" Width="150" HorizontalAlignment="Center" Text="{Binding RemoteServerAddress}">127.0.0.1:19132</TextBox>
+				<TextBlock Margin="10" HorizontalAlignment="Center">Proxy port: </TextBlock>
+				<TextBox Margin="10" Width="150" HorizontalAlignment="Center" Text="{Binding ProxyPort}">19135</TextBox>
+				<Button  HorizontalAlignment="Center" Command="{Binding OnStartProxyCommand}" CommandParameter="{Binding $parent[Window]}">Start Proxy</Button>
+			</StackPanel>
+		</StackPanel>
+	</Border>
+</Window>

@@ -1,10 +1,12 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
+using BedrockWireProxy;
 using CommandLine;
 using MiNET;
 using MiNET.Net.RakNet;
 using Newtonsoft.Json;
 
-namespace BedrockWireProxy
+namespace BedrockWireProxyCli
 {
 	class Startup
 	{
@@ -14,9 +16,9 @@ namespace BedrockWireProxy
 			public int ListenPort { get; set; }
 			[Option('r', "remote", Required = false, HelpText = "Set remote server address.", Default = "127.0.0.1:19132")]
 			public string? RemoteAddress { get; set; }
-			[Option('o', "output", Required = false, HelpText = "Set output <stdout/file path>", Default = "out.bw")]
+			[Option('o', "output", Required = false, HelpText = "Set output <stdout/file path>", Default = "stdout")]
 			public string? Output { get; set; }
-			[Option('f', "format", Required = false, HelpText = "Set output format [binary/human]", Default = "binary")]
+			[Option('f', "format", Required = false, HelpText = "Set output format <binary>", Default = "binary")]
 			public string? Format { get; set; }
 			[Option('a', "auth", Required = false, HelpText = "Set auth")]
 			public string? Auth { get; set; }
@@ -37,32 +39,24 @@ namespace BedrockWireProxy
 					authDataJson = sr.ReadToEnd();
 				}
 			}
-			AuthData authData = new AuthData(JsonConvert.DeserializeObject<AuthDataSerialized>(authDataJson));
 
 			IPEndPoint remoteServer = IPEndPoint.Parse(options.RemoteAddress);
-
+			AuthData authData = JsonConvert.DeserializeObject<AuthDataSerialized>(authDataJson).ToAuthData();
 			PacketWriter packetWriter = new PacketWriter(options.Output, options.Format);
 
-			RakConnection connection = new RakConnection(new IPEndPoint(IPAddress.Any, options.ListenPort), new GreyListManager(), new MotdProvider());
-			connection.CustomMessageHandlerFactory = session => new ProxyServerMessageHandler(session, remoteServer, authData, packetWriter);
-
-			ConnectionInfo connectionInfo = connection.ConnectionInfo;
-			connectionInfo.MaxNumberOfPlayers = 1;
-			connectionInfo.MaxNumberOfConcurrentConnects = 1;
-
-			connection.Start();
+			BedrockWireProxy.BedrockWireProxy proxy = new BedrockWireProxy.BedrockWireProxy(authData, options.ListenPort, remoteServer, packetWriter);
 			
 			CancellationTokenSource tokenSource = new CancellationTokenSource();
-
 			Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs args) { 
 				args.Cancel = true;
 				tokenSource.Cancel(true);
 			};
 
+			proxy.Start();
+
 			packetWriter.StartWriting(tokenSource.Token);
 
-
-			connection.Stop();
+			proxy.Stop();
 		}
 	}
 }

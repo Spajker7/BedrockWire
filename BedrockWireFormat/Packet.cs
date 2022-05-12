@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BedrockWireProxy
+namespace BedrockWireFormat
 {
-    public class SerializedPacket
+    public class Packet
     {
         public PacketDirection Direction { get; set; }
-        public RawMinecraftPacket Packet { get; set; }
+        public byte Id { get; set; }
+        public uint Length { get; set; }
+        public ReadOnlyMemory<byte> Payload { get; set; }
         public ulong Time { get; set; }
     }
 }

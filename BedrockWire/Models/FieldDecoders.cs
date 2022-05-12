@@ -1,4 +1,5 @@
-﻿using BedrockWire.Utils;
+﻿using BedrockWire.Models.PacketFields;
+using BedrockWire.Utils;
 using fNbt;
 using Jose;
 using Newtonsoft.Json;
@@ -23,6 +24,11 @@ namespace BedrockWire.Models
         private static object ReadInt(BinaryReader reader)
         {
             return reader.ReadInt32();
+        }
+        
+        private static object ReadUInt(BinaryReader reader)
+        {
+            return reader.ReadUInt32();
         }
 
         private static object ReadShortBe(BinaryReader reader)
@@ -80,6 +86,11 @@ namespace BedrockWire.Models
             return VarInt.ReadUInt32(reader);
         }
 
+        private static object ReadDoubleVarIntProduct(BinaryReader reader)
+        {
+            return VarInt.ReadSInt32(reader) * VarInt.ReadSInt32(reader);
+        }
+
         private static object ReadVarInt(BinaryReader reader)
         {
             return VarInt.ReadSInt32(reader);
@@ -113,11 +124,19 @@ namespace BedrockWire.Models
 
         private static object ReadByteArray(BinaryReader reader)
         {
+            
             if (reader.BaseStream.Position == reader.BaseStream.Length) return "";
             int len = (int)ReadLength(reader);
             if (len <= 0) return "";
-
+            /*
             return BitConverter.ToString(reader.ReadBytes(len)).Replace("-", " ");
+            */
+            return reader.ReadBytes(len);
+        }
+
+        private static object ReadFixed256(BinaryReader reader)
+        {
+            return BitConverter.ToString(reader.ReadBytes(256)).Replace("-", " ");
         }
 
         private static object ReadJson(BinaryReader reader)
@@ -175,6 +194,7 @@ namespace BedrockWire.Models
             {"unsignedShort", ReadUShort},
             {"intBE", ReadIntBe},
             {"int", ReadInt},
+            {"unsignedInt", ReadUInt},
             {"longBE", ReadLongBE},
             {"long", ReadLong},
             {"float", ReadFloat},
@@ -192,6 +212,8 @@ namespace BedrockWire.Models
             {"uuid", ReadUUID },
             {"nbt", ReadNBT },
             {"byteArray", ReadByteArray },
+            {"doubleVarIntProduct", ReadDoubleVarIntProduct }, // TODO: Get rid of this
+            {"fixed256", ReadFixed256 },// TODO: Get rid of this
         };
 
         public static Dictionary<string, List<PacketField>> CustomDecoders = new Dictionary<string, List<PacketField>>();

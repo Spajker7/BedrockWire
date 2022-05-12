@@ -1,4 +1,5 @@
-﻿using Org.BouncyCastle.Asn1.Pkcs;
+﻿using BedrockWireAuthDump.Model;
+using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
@@ -10,24 +11,27 @@ namespace BedrockWireAuthDump
     public class AuthDump
     {
 		private readonly XboxAuthService _xboxAuthService;
-		private string? DeviceCode { get; set; }
 
 		public AuthDump()
 		{
 			_xboxAuthService = new XboxAuthService();
 		}
 
-		public async Task<(string userCode, string verificationUrl)> StartDeviceCode()
+		public async Task<(string userCode, string verificationUrl, string deviceCode)> RequestDeviceCode()
 		{
 			var result = await _xboxAuthService.StartDeviceAuthConnect();
-			DeviceCode = result.DeviceCode;
 
-			return (result.UserCode, result.VerificationUrl);
+			return (result.UserCode, result.VerificationUrl, result.DeviceCode);
 		}
 
-		public async Task<(bool success, BedrockTokenPair token, AsymmetricCipherKeyPair minecraftKeyPair, string minecraftChain)> StartPolling()
+		public async Task<BedrockTokenPair> StartDeviceCodePolling(string deviceCode)
 		{
-			return await _xboxAuthService.DoDeviceCodeLogin(DeviceCode);
+			return await _xboxAuthService.DoDeviceCodeLogin(deviceCode);
+		}
+
+		public async Task<(bool success, string minecraftChain, AsymmetricCipherKeyPair minecraftKeyPair)> GetMinecraftChain(string accessToken, string deviceId)
+		{
+			return await _xboxAuthService.TryAuthenticate(accessToken, deviceId);
 		}
 
 		public static (string priv, string pub) SerializeKeys(AsymmetricCipherKeyPair keys)

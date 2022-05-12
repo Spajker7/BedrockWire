@@ -3,8 +3,10 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Text;
+using BedrockWireAuthDump.Model;
 using Jose;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Nist;
@@ -19,213 +21,6 @@ using Org.BouncyCastle.X509;
 
 namespace BedrockWireAuthDump
 {
-	public class AuthResponse<TClaims>
-	{
-		[JsonProperty("IssueInstant")] public DateTimeOffset IssueInstant { get; set; }
-
-		[JsonProperty("NotAfter")] public DateTimeOffset NotAfter { get; set; }
-
-		[JsonProperty("Token")] public string Token { get; set; }
-
-		[JsonProperty("DisplayClaims")] public TClaims DisplayClaims { get; set; }
-	}
-
-	public class XstsXui
-	{
-		//	[JsonProperty("agg")]
-		//	public string AgeGroup { get; set; }
-
-		[JsonProperty("gtg")] public string Gamertag { get; set; }
-
-		[JsonProperty("xid")] public string XUID { get; set; }
-
-		[JsonProperty("uhs")] public string UserHash { get; set; }
-	}
-
-	public class ProofKey
-	{
-		[JsonProperty("crv")] public string Crv { get; set; } = "P-256";
-
-		[JsonProperty("alg")] public string Algorithm { get; set; } = "ES256";
-
-		[JsonProperty("use")] public string Use { get; set; } = "sig";
-
-		[JsonProperty("kty")] public string Kty { get; set; } = "EC";
-
-		[JsonProperty("x")] public string X { get; set; }
-
-		[JsonProperty("y")] public string Y { get; set; }
-
-		public ProofKey(string x, string y)
-		{
-			X = x;
-			Y = y;
-		}
-	}
-
-	public class Xui
-	{
-		[JsonProperty("uhs")] public string Uhs { get; set; }
-	}
-
-	public class XuiDisplayClaims<TType>
-	{
-		[JsonProperty("xui")] public TType[] Xui { get; set; }
-	}
-
-	public interface IDeviceAuthConnectResponse
-	{
-		string UserCode { get; }
-		string DeviceCode { get; }
-		string VerificationUrl { get; }
-		int Interval { get; }
-		int ExpiresIn { get; }
-	}
-
-	public class MsaDeviceAuthConnectResponse : IDeviceAuthConnectResponse
-	{
-		/// <inheritdoc />
-		[JsonProperty("user_code")]
-		public string UserCode { get; set; }
-
-		/// <inheritdoc />
-		[JsonProperty("device_code")]
-		public string DeviceCode { get; set; }
-
-		/// <inheritdoc />
-		[JsonProperty("verification_uri")]
-		public string VerificationUrl { get; set; }
-
-		/// <inheritdoc />
-		[JsonProperty("interval")]
-		public int Interval { get; set; }
-
-		/// <inheritdoc />
-		[JsonProperty("expires_in")]
-		public int ExpiresIn { get; set; }
-	};
-
-	[JsonObject(MemberSerialization.OptIn)]
-	public class AccessTokens
-	{
-		[JsonProperty("expires_in")] public int Expiration { get; set; }
-
-		[JsonProperty("access_token")] public string AccessToken { get; set; }
-
-		[JsonProperty("refresh_token")] public string RefreshToken { get; set; }
-	}
-
-	public class MinecraftTokenResponse
-	{
-		[JsonProperty("username")] public string Username { get; set; }
-
-		[JsonProperty("roles")] public string[] Roles { get; set; }
-
-		[JsonProperty("access_token")] public string AccessToken { get; set; }
-
-		[JsonProperty("token_type")] public string TokenType { get; set; }
-
-		[JsonProperty("expires_in")] public long ExpiresIn { get; set; }
-	}
-
-	public class MsaDeviceAuthPollState : BedrockTokenPair
-	{
-		[JsonProperty("user_id")] public string UserId;
-
-		[JsonProperty("token_type")] public string TokenType;
-
-		[JsonProperty("scope")] public string Scope;
-
-		//public int interval;
-		[JsonProperty("expires_in")] public int ExpiresIn;
-
-		[JsonProperty("error")] public string Error;
-	};
-
-	public class ApiResponse<T>
-	{
-		public T Result { get; set; }
-		public HttpStatusCode StatusCode { get; set; }
-		public bool IsSuccess { get; set; } = false;
-
-		public ApiResponse(bool isSuccess, HttpStatusCode statusCode, T result)
-		{
-			IsSuccess = isSuccess;
-			StatusCode = statusCode;
-			Result = result;
-		}
-	}
-
-	public class BedrockTokenPair
-	{
-		[JsonProperty("access_token")] public string AccessToken;
-
-		[JsonProperty("refresh_token")] public string RefreshToken;
-
-		[JsonProperty("expiry_time")] public DateTime ExpiryTime;
-
-		[JsonIgnore] public string DeviceId;
-	}
-
-	public class JWTMapper : IJsonMapper
-	{
-		private static DefaultContractResolver ContractResolver = new DefaultContractResolver
-		{
-			NamingStrategy = new CamelCaseNamingStrategy()
-		};
-
-		public string Serialize(object obj)
-		{
-			var settings = new JsonSerializerSettings
-			{
-				NullValueHandling = NullValueHandling.Include,
-				//    ContractResolver = ContractResolver
-			};
-
-			return JsonConvert.SerializeObject(obj, Formatting.Indented, settings);
-		}
-
-		public T Parse<T>(string json)
-		{
-			var settings = new JsonSerializerSettings
-			{
-				NullValueHandling = NullValueHandling.Include,
-				//  ContractResolver = ContractResolver
-			};
-
-			return JsonConvert.DeserializeObject<T>(json, settings);
-		}
-	}
-
-	public class TitleDisplayClaims
-	{
-		[JsonProperty("xti")] public XTI Xti { get; set; }
-	}
-
-	public class AuthRequest
-	{
-		[JsonProperty("RelyingParty")] public string RelyingParty { get; set; }
-
-		[JsonProperty("TokenType")] public string TokenType { get; set; }
-
-		[JsonProperty("Properties")] public Dictionary<string, object> Properties { get; set; }
-	}
-
-	public class DeviceDisplayClaims
-	{
-		[JsonProperty("xdi")] public XDI Xdi { get; set; }
-	}
-
-	public class XDI
-	{
-		[JsonProperty("did")] public string DID { get; set; }
-	}
-
-	public class XTI
-	{
-		[JsonProperty("tid")] public string TID { get; set; }
-	}
-
 	public class XboxAuthService
 	{
 		public const string MSA_CLIENT_ID = "android-app://com.mojang.minecraftpe.H62DKCBHJP6WXXIV7RBFOGOL4NAK4E6Y";
@@ -251,8 +46,6 @@ namespace BedrockWireAuthDump
 		private string X { get; set; }
 		private string Y { get; set; }
 
-		//private  ECDsa   EcDsa  { get; }
-
 		private readonly HttpClient _httpClient;
 		private readonly AsymmetricCipherKeyPair _authKeyPair;
 
@@ -263,7 +56,6 @@ namespace BedrockWireAuthDump
 			ECPublicKeyParameters pubAsyKey = (ECPublicKeyParameters) _authKeyPair.Public;
 			X = UrlSafe(pubAsyKey.Q.AffineXCoord.GetEncoded());
 			Y = UrlSafe(pubAsyKey.Q.AffineYCoord.GetEncoded());
-			//EcDsa = ConvertToSingKeyFormat(GenerateKeys());
 
 			var cookieContainer = new CookieContainer();
 
@@ -300,43 +92,13 @@ namespace BedrockWireAuthDump
 			return System.Convert.ToBase64String(a).TrimEnd(padding).Replace('+', '-').Replace('/', '_');
 		}
 
-		public static void OpenBrowser(string url)
-		{
-			//	return;
-			try
-			{
-				Process.Start(url);
-			}
-			catch
-			{
-				// hack because of this: https://github.com/dotnet/corefx/issues/10361
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				{
-					url = url.Replace("&", "^&");
-					Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
-				}
-				else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-				{
-					Process.Start("xdg-open", url);
-				}
-				else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-				{
-					Process.Start("open", url);
-				}
-				else
-				{
-					throw;
-				}
-			}
-		}
-
 		private class MCChainPostData
 		{
 			[JsonProperty("identityPublicKey")] public string IdentityPublicKey { get; set; }
 		}
 
 
-		public async Task<(bool, string?)> RequestMinecraftChain(HttpClient client, AuthResponse<XuiDisplayClaims<XstsXui>> token, AsymmetricCipherKeyPair MinecraftKeyPair)
+		public async Task<(bool Success, string? MinecraftChain)> RequestMinecraftChain(HttpClient client, AuthResponse<XuiDisplayClaims<XstsXui>> token, AsymmetricCipherKeyPair MinecraftKeyPair)
 		{
 			var b = Convert.ToBase64String(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(MinecraftKeyPair.Public).GetEncoded());
 
@@ -408,89 +170,6 @@ namespace BedrockWireAuthDump
 					return JsonConvert.DeserializeObject<AuthResponse<XuiDisplayClaims<XstsXui>>>(rawResponse);
 
 					//Log.Debug($"Xsts Auth: {rawResponse}");
-				}
-			}
-		}
-
-		public async Task<AuthResponse<XuiDisplayClaims<XstsXui>>> AuthenticatewithJavaXSTS(HttpClient client,
-			string userToken,
-			string relyingParty = "rp://api.minecraftservices.com/")
-		{
-			//var key = EcDsa.ExportParameters(false);
-			var authRequest = new AuthRequest
-			{
-				RelyingParty = relyingParty,
-				TokenType = "JWT",
-				Properties = new Dictionary<string, object>()
-				{
-					{ "UserTokens", new string[] { userToken } }, { "SandboxId", "RETAIL" }
-				}
-			};
-
-
-			using (var r = new HttpRequestMessage(HttpMethod.Post, XblAuth))
-			{
-				SetHeadersAndContent(r, authRequest);
-
-				using (var response = await client.SendAsync(r, HttpCompletionOption.ResponseContentRead)
-						  .ConfigureAwait(false))
-				{
-					response.EnsureSuccessStatusCode();
-
-					var rawResponse = await response.Content.ReadAsStringAsync();
-
-					return JsonConvert.DeserializeObject<AuthResponse<XuiDisplayClaims<XstsXui>>>(rawResponse);
-				}
-			}
-		}
-
-		private async Task<AuthResponse<XuiDisplayClaims<XstsXui>>> ObtainXbox(HttpClient client,
-			AuthResponse<DeviceDisplayClaims> deviceToken,
-			string accessToken)
-		{
-			var authRequest = new Dictionary<string, object>()
-			{
-				{ "AccessToken", $"t={accessToken}" },
-				{ "AppId", ClientId },
-				{ "deviceToken", deviceToken.Token },
-				{ "Sandbox", "RETAIL" },
-				{ "UseModernGamertag", true },
-				{ "SiteName", "user.auth.xboxlive.com" },
-				{ "RelyingParty", "https://multiplayer.minecraft.net/" },
-				{ "ProofKey", new ProofKey(X, Y) }
-			};
-
-			var r = new HttpRequestMessage(HttpMethod.Post, "https://sisu.xboxlive.com/authorize");
-
-			{
-				SetHeadersAndContent(r, authRequest);
-
-				using (var response = await client.SendAsync(r).ConfigureAwait(false))
-				{
-					var rawResponse = await response.Content.ReadAsStringAsync();
-
-					Console.WriteLine($"Response: {rawResponse}");
-
-					if (!string.IsNullOrWhiteSpace(response.ReasonPhrase))
-						Console.WriteLine($"Reason: {response.ReasonPhrase}");
-
-					Console.WriteLine($"Response Headers: ");
-
-					foreach (var header in response.Headers)
-					{
-						Console.WriteLine($"{header.Key}={string.Join(',', header.Value)}");
-					}
-
-					foreach (var header in response.TrailingHeaders)
-					{
-						Console.WriteLine($"{header.Key}={string.Join(',', header.Value)}");
-					}
-
-					Console.WriteLine();
-
-					response.EnsureSuccessStatusCode();
-
-					return JsonConvert.DeserializeObject<AuthResponse<XuiDisplayClaims<XstsXui>>>(rawResponse);
 				}
 			}
 		}
@@ -775,42 +454,7 @@ namespace BedrockWireAuthDump
 			return new Response(res.StatusCode, body);
 		}
 
-		public async Task<ApiResponse<MinecraftTokenResponse>> AuthenticateWithMinecraft(HttpClient client,
-			string userhash,
-			string xstsToken)
-		{
-			MinecraftTokenResponse tokenResponse = null;
-			bool isOk = false;
-			HttpStatusCode statusCode = HttpStatusCode.RequestTimeout;
-
-			try
-			{
-				using (var r = new HttpRequestMessage(HttpMethod.Post, LoginWithXbox))
-				{
-					SetHeadersAndContent(r, new { identityToken = $"XBL3.0 x={userhash};{xstsToken}" });
-
-					using (var response = await client.SendAsync(r, HttpCompletionOption.ResponseContentRead)
-							  .ConfigureAwait(false))
-					{
-						statusCode = response.StatusCode;
-						response.EnsureSuccessStatusCode();
-
-						var rawResponse = await response.Content.ReadAsStringAsync();
-						tokenResponse = JsonConvert.DeserializeObject<MinecraftTokenResponse>(rawResponse);
-						isOk = true;
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				//Log.Error(ex, "Failed to authenticate with minecraft...");
-			}
-			finally { }
-
-			return new ApiResponse<MinecraftTokenResponse>(isOk, statusCode, tokenResponse);
-		}
-
-		public async Task<(bool success, BedrockTokenPair token, AsymmetricCipherKeyPair minecraftKeyPair, string minecraftChain)> DoDeviceCodeLogin(string deviceCode)
+		public async Task<BedrockTokenPair> DoDeviceCodeLogin(string deviceCode)
 		{
 			HttpClient client = _httpClient;
 
@@ -833,7 +477,7 @@ namespace BedrockWireAuthDump
 			{
 				//Log.Warn($"Token was null.");
 
-				return (false, null, null, null);
+				return null;
 			}
 
 			if (token.ExpiryTime == default)
@@ -841,24 +485,13 @@ namespace BedrockWireAuthDump
 				token.ExpiryTime = DateTime.UtcNow.AddSeconds(token.ExpiresIn);
 			}
 
-			var tokenPair = new BedrockTokenPair()
+			return new BedrockTokenPair()
 			{
 				AccessToken = token.AccessToken,
 				ExpiryTime = token.ExpiryTime,
 				RefreshToken = token.RefreshToken,
 				DeviceId = deviceId
 			};
-
-			AsymmetricCipherKeyPair minecraftKeyPair =GenerateClientKey();
-
-			var result = await TryAuthenticate(token.AccessToken, deviceId, minecraftKeyPair);
-
-			if (result.Success)
-			{
-				return (true, tokenPair, minecraftKeyPair, result.MinecraftChain);
-			}
-
-			return (false, tokenPair, minecraftKeyPair, result.MinecraftChain);
 		}
 
 		public static AsymmetricCipherKeyPair GenerateClientKey()
@@ -868,8 +501,10 @@ namespace BedrockWireAuthDump
 			return generator.GenerateKeyPair();
 		}
 
-		public async Task<(bool Success, string MinecraftChain)> TryAuthenticate(string accessToken, string deviceId, AsymmetricCipherKeyPair minecraftKeyPair)
+		public async Task<(bool Success, string MinecraftChain, AsymmetricCipherKeyPair minecraftKeyPair)> TryAuthenticate(string accessToken, string deviceId)
 		{
+			AsymmetricCipherKeyPair minecraftKeyPair = GenerateClientKey();
+
 			var userToken = await ObtainUserToken(_httpClient, accessToken);
 			SpinWait.SpinUntil(() => DateTime.UtcNow >= userToken.IssueInstant.UtcDateTime);
 
@@ -879,11 +514,18 @@ namespace BedrockWireAuthDump
 			var titleToken = await DoTitleAuth(_httpClient, deviceToken, accessToken);
 			SpinWait.SpinUntil(() => DateTime.UtcNow >= titleToken.IssueInstant.UtcDateTime);
 
-			//var xsts        = await ObtainXbox(_httpClient, deviceToken, userToken.Token);
 			var xsts = await DoXsts(_httpClient, deviceToken, titleToken, userToken.Token);
 			SpinWait.SpinUntil(() => DateTime.UtcNow >= xsts.IssueInstant.UtcDateTime);
 
-			return await RequestMinecraftChain(_httpClient, xsts, minecraftKeyPair);
+			var result = await RequestMinecraftChain(_httpClient, xsts, minecraftKeyPair);
+
+			return (result.Success, result.MinecraftChain, minecraftKeyPair);
+		}
+
+		public async Task<BedrockTokenPair> RefreshAccessToken(string refreshToken)
+        {
+			return await RefreshAccessToken(refreshToken, ClientId);
+
 		}
 
 		public async Task<BedrockTokenPair> RefreshAccessToken(string refreshToken,
@@ -939,6 +581,29 @@ namespace BedrockWireAuthDump
 		{
 			return await StartDeviceAuthConnect(ClientId);
 		}
+
+		public static bool IsMinecraftChainValid(string[] minecraftChain)
+        {
+			var unixTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+			foreach (var elm in minecraftChain)
+			{
+				var payloadJson = JWT.Payload(elm);
+				var payload = JsonConvert.DeserializeObject<Dictionary<object, object>>(payloadJson);
+
+				if(((long) payload["exp"]) < unixTime)
+                {
+					return false;
+                }
+			}
+
+			return true;
+		}
+
+		public static bool IsAccessTokenValid(BedrockTokenPair token)
+        {
+			return token.ExpiryTime > DateTime.Now;
+        }
 
 		public async Task<MsaDeviceAuthConnectResponse> StartDeviceAuthConnect(string clientId, params string[] scopes)
 		{

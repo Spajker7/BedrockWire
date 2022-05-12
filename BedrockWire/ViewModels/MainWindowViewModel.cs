@@ -1,17 +1,23 @@
 using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using BedrockWire.Models;
+using BedrockWire.Models.PacketFields;
+using BedrockWire.Utils;
+using BedrockWire.Views;
+using Newtonsoft.Json;
 using ReactiveUI;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 
@@ -19,19 +25,38 @@ namespace BedrockWire.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        public List<Packet> PacketList { get; set; }
+        public uint PacketOrder { get; set; }
+        public ConcurrentQueue<Packet> PacketList { get; set; }
         public ObservableCollection<Packet> FilteredPacketList { get; set; }
+        public DataGridCollectionView FilteredPacketListView { get; set; }
         private Dictionary<int, PacketDefinition> PacketDefinitions { get; set; }
+        public string DecodeTime { get; set; }
+        public string FilterTime { get; set; }
 
-        private bool filterOutMoveDelta;
-        public bool FilterOutMoveDelta
+        public bool IsLive { get; set; }
+        public Process ProxyProcess { get; set; }
+
+        private bool filterOutNoise;
+        public bool FilterOutNoise
         {
-            get => filterOutMoveDelta;
+            get => filterOutNoise;
             set {
-                filterOutMoveDelta = value;
+                filterOutNoise = value;
                 RefreshFilters();
             }
         }
+
+        private bool filterOutGood;
+        public bool FilterOutGood
+        {
+            get => filterOutGood;
+            set
+            {
+                filterOutGood = value;
+                RefreshFilters();
+            }
+        }
+        
 
         private string filterText;
         public string FilterText
@@ -55,15 +80,35 @@ namespace BedrockWire.ViewModels
 
         public MainWindowViewModel()
         {
-            PacketList = new List<Packet>();
+            PacketOrder = 0;
+            PacketList = new ConcurrentQueue<Packet>();
             FilteredPacketList = new ObservableCollection<Packet>();
+            FilteredPacketListView = new DataGridCollectionView(FilteredPacketList);
+            FilteredPacketListView.SortDescriptions.Clear();
+            FilteredPacketListView.SortDescriptions.Add(DataGridSortDescription.FromComparer(new PacketComparer()));
             PacketDefinitions = new Dictionary<int, PacketDefinition>();
+            FilterOutGood = false;
+            FilterOutNoise = false;
+            IsLive = false;
             UpdateStatusText();
+
+            if(Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                desktop.Exit += (sender, args) =>
+                {
+                    if (ProxyProcess != null)
+                    {
+                        ProxyProcess.Kill();
+                    }
+                };
+            }
         }
 
         private void DecodePacket(Packet packet)
         {
             packet.Name = "UNKNOWN_PACKET";
+            packet.Error = null;
+            packet.Decoded = null;
             if (PacketDefinitions != null && PacketDefinitions.ContainsKey(packet.Id))
             {
                 packet.Name = PacketDefinitions[packet.Id].Name;
@@ -97,23 +142,21 @@ namespace BedrockWire.ViewModels
         private void UpdateStatusText()
         {
             StatusText = "Loaded " + PacketDefinitions.Count + " packet definitions. Showing " + FilteredPacketList.Count + "/" + PacketList.Count + " packets. " + PacketList.Where(p => p.Error != null).Count() + "/" + PacketList.Count + " have errors.";
+            StatusText += " Decode Time: " + DecodeTime + " FilterTime: " + FilterTime;
             this.RaisePropertyChanged(nameof(StatusText));
         }
 
-        public async void OnOpenCommand(Window window)
+        public void OpenStreamFinal(Stream stream, Action? finishCallback = null)
         {
-            var dlg = new OpenFileDialog();
-            dlg.Filters.Add(new FileDialogFilter() { Name = "BedrockWire Files", Extensions = { "bw" } });
-            dlg.AllowMultiple = false;
+            PacketOrder = 0;
+            PacketList.Clear();
+            FilteredPacketList.Clear();
 
-            var result = await dlg.ShowAsync(window);
-            if (result != null && result.Length > 0)
+            StatusText = "Loading...";
+            this.RaisePropertyChanged(nameof(StatusText));
+
+            new Thread(() =>
             {
-                PacketList = new List<Packet>();
-                this.RaisePropertyChanged(nameof(PacketList));
-
-                var stream = new FileStream(result[0], FileMode.Open);
-
                 byte[] header = new byte[4];
                 stream.Read(header, 0, 4);
 
@@ -130,8 +173,17 @@ namespace BedrockWire.ViewModels
                 }
 
                 BinaryReader reader = new BinaryReader(new DeflateStream(stream, CompressionMode.Decompress));
-                new Thread(() =>
+
+                Stopwatch sw2 = new Stopwatch();
+                sw2.Start();
+
+                using (ManualResetEvent resetEvent = new ManualResetEvent(false))
                 {
+                    int packets = 0;
+                    int packetsFinished = 0;
+                    bool waiting = false;
+                    DedicatedThreadPool threadPool = new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount / 2));
+
                     try
                     {
                         while (true)
@@ -144,36 +196,226 @@ namespace BedrockWire.ViewModels
 
                             string name = "UNKNOWN_PACKET";
 
-                            var packet = new Packet() { Direction = direction == 0 ? "C -> S" : "S -> C", Id = packetId, Payload = payload, Time = time, Length = (ulong)length };
-                            DecodePacket(packet);
+                            var packet = new Packet() { OrderId = PacketOrder++, Direction = direction == 0 ? "C -> S" : "S -> C", Id = packetId, Payload = payload, Time = time, Length = (ulong)length };
+                            PacketList.Enqueue(packet);
 
-                            PacketList.Add(packet);
-                            if (IsPacketVisible(packet))
+                            Interlocked.Increment(ref packets);
+                            threadPool.QueueUserWorkItem(() =>
                             {
-                                Dispatcher.UIThread.InvokeAsync(() =>
-                                {
-                                    FilteredPacketList.Add(packet);
-                                    UpdateStatusText();
-                                });
-                            }
+                                Stopwatch sw = new Stopwatch();
+                                sw.Start();
+                                DecodePacket(packet);
+                                sw.Stop();
+                                packet.DecodeTime = sw.Elapsed.ToString();
+
+                                Interlocked.Increment(ref packetsFinished);
+                                if (Interlocked.Decrement(ref packets) == 0 && waiting)
+                                    resetEvent.Set();
+                            });
                         }
                     }
                     catch (Exception ex)
                     {
                     }
 
+                    if(packetsFinished != PacketList.Count)
+                    {
+                        waiting = true;
+                        resetEvent.WaitOne();
+                    }
+
+                    sw2.Stop();
+                    DecodeTime = sw2.Elapsed.ToString();
                     Dispatcher.UIThread.InvokeAsync(() =>
                     {
                         RefreshFilters();
+                        UpdateStatusText();
+                        if(finishCallback != null)
+                        {
+                            finishCallback();
+                        }
                     });
+
                     reader.Close();
-                }).Start();
+                }
+            }).Start();
+        }
+
+        public void OpenStreamNonFinal(Stream stream, Action? finishCallback = null)
+        {
+            PacketOrder = 0;
+            PacketList.Clear();
+            FilteredPacketList.Clear();
+
+            new Thread(() =>
+            {
+                BinaryReader headerReader = new BinaryReader(stream);
+                byte[] header = headerReader.ReadBytes(4);
+
+
+                if (header[0] != 66 || header[1] != 68 || header[2] != 87)
+                {
+                    return;
+                }
+
+                byte version = header[3];
+
+                if (version != 1)
+                {
+                    return;
+                }
+
+                BinaryReader reader = new BinaryReader(new DeflateStream(stream, CompressionMode.Decompress));
+
+                Stopwatch sw2 = new Stopwatch();
+                sw2.Start();
+
+                using (ManualResetEvent resetEvent = new ManualResetEvent(false))
+                {
+                    DedicatedThreadPool threadPool = new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount / 2));
+
+                    try
+                    {
+                        while (true)
+                        {
+                            byte direction = reader.ReadByte();
+                            byte packetId = reader.ReadByte();
+                            ulong time = reader.ReadUInt64();
+                            int length = reader.ReadInt32();
+                            byte[] payload = reader.ReadBytes(length);
+
+                            string name = "UNKNOWN_PACKET";
+
+                            var packet = new Packet() { OrderId = PacketOrder++, Direction = direction == 0 ? "C -> S" : "S -> C", Id = packetId, Payload = payload, Time = time, Length = (ulong)length };
+                            PacketList.Enqueue(packet);
+
+                            threadPool.QueueUserWorkItem(() =>
+                            {
+                                Stopwatch sw = new Stopwatch();
+                                sw.Start();
+                                DecodePacket(packet);
+                                sw.Stop();
+                                packet.DecodeTime = sw.Elapsed.ToString();
+
+                                if(IsPacketVisible(packet))
+                                {
+                                    Dispatcher.UIThread.Post(() =>
+                                    {
+                                        FilteredPacketList.Add(packet);
+                                        UpdateStatusText();
+                                    }, DispatcherPriority.MinValue);
+                                }
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+
+                    sw2.Stop();
+                    DecodeTime = sw2.Elapsed.ToString();
+                    Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        UpdateStatusText();
+                        if (finishCallback != null)
+                        {
+                            finishCallback();
+                        }
+                    });
+
+                    reader.Close();
+                }
+            }).Start();
+        }
+
+        public async void OnOpenCommand(Window window)
+        {
+            var dlg = new OpenFileDialog();
+            dlg.Filters.Add(new FileDialogFilter() { Name = "BedrockWire Files", Extensions = { "bw" } });
+            dlg.AllowMultiple = false;
+
+            var result = await dlg.ShowAsync(window);
+            if (result != null && result.Length > 0)
+            {
+                var stream = new FileStream(result[0], FileMode.Open);
+
+                var spinner = new SpinnerDialog();
+                spinner.DataContext = "Loading...";
+                spinner.ShowDialog(window);
+                OpenStreamFinal(stream, () =>
+                {
+                    spinner.Close();
+                });
             }
+        }
+
+        private void StartProxy(ProxySettings settings)
+        {
+            string proxyLocation = "BedrockWireProxy.exe"; // TODO: 
+#if DEBUG
+            proxyLocation = "C:\\Users\\Spajk\\Desktop\\leetapp\\BedrockWire\\BedrockWire\\BedrockWireProxyCli\\bin\\Debug\\net6.0\\BedrockWireProxyCli.exe";
+#endif
+
+            string json = Regex.Replace(JsonConvert.SerializeObject(settings.Auth), @"(\\*)" + "\"", @"$1$1\" + "\"");
+
+            ProxyProcess = new Process();
+            // Configure the process using the StartInfo properties.
+            ProxyProcess.StartInfo.FileName = proxyLocation;
+            ProxyProcess.StartInfo.Arguments = "-p " + settings.ProxyPort + " -r " + settings.RemoteServerAddress + " -o stdout -f binary -a " + json;
+            ProxyProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            ProxyProcess.StartInfo.UseShellExecute = false;
+            ProxyProcess.StartInfo.RedirectStandardOutput = true;
+            ProxyProcess.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
+            //ProxyProcess.StartInfo.CreateNoWindow = true;
+            ProxyProcess.EnableRaisingEvents = true;
+            ProxyProcess.Start();
+
+            IsLive = true;
+            this.RaisePropertyChanged(nameof(IsLive));
+
+            ProxyProcess.Exited += (sender, args) =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    IsLive = false;
+                    this.RaisePropertyChanged(nameof(IsLive));
+                });
+            };
+
+            OpenStreamNonFinal(ProxyProcess.StandardOutput.BaseStream, null);
+        }
+
+        public async void OnStartProxyCommand(Window window)
+        {
+            var dlg = new StartProxyDialog();
+            dlg.DataContext = new StartProxyDialogViewModel();
+            ProxySettings proxySettings = await dlg.ShowDialog<ProxySettings>(window);
+            StartProxy(proxySettings);
+        }
+
+        public async void OnStopProxyCommand(Window window)
+        {
+            if (IsLive && ProxyProcess != null)
+            {
+                ProxyProcess.Kill();
+            }
+        }
+
+        public async void OnClearCommand(Window window)
+        {
+            PacketOrder = 0;
+            PacketList.Clear();
+            FilteredPacketList.Clear();
         }
 
         private bool IsPacketVisible(Packet packet)
         {
-            if (FilterOutMoveDelta && packet.Id == 111)
+            if (FilterOutNoise && (packet.Id == 111 || packet.Id == 40 || packet.Id == 58 || packet.Id == 144))
+            {
+                return false;
+            }
+
+            if(FilterOutGood && packet.Error == null)
             {
                 return false;
             }
@@ -219,31 +461,73 @@ namespace BedrockWire.ViewModels
             UpdateStatusText();
         }
 
-        private PacketField ParseField(XmlNode node)
+        private List<PacketField> GetSubFields(XmlNode node)
         {
-            PacketField packetField = new PacketField() {
-                Name = node.Attributes.GetNamedItem("name")?.InnerText,
-                Type = node.Attributes.GetNamedItem("type")?.InnerText,
-                IsSwitch = node.Name == "switch",
-                IsList = node.Name == "list",
-                IsFlags = node.Name == "flags",
-                Case = node.Name == "case" ? node.Attributes.GetNamedItem("value")?.InnerText : null,
-                Conditional = node.Name == "conditional" ? node.Attributes.GetNamedItem("condition")?.InnerText : null,
-                ReferenceId = node.Attributes.GetNamedItem("refId")?.InnerText,
-                ReferencesId = node.Attributes.GetNamedItem("ref")?.InnerText,
-                SubFields = new List<PacketField>(),
-            };
+            List<PacketField> list = new List<PacketField>();
 
             foreach (XmlNode fieldNode in node.ChildNodes)
             {
-                if(fieldNode.NodeType == XmlNodeType.Element)
+                if (fieldNode.NodeType == XmlNodeType.Element)
                 {
-                    packetField.SubFields.Add(ParseField(fieldNode));
+                    list.Add(ParseField(fieldNode));
                 }
-                
+
             }
 
-            return packetField;
+            return list;
+        }
+
+        private PacketField ParseField(XmlNode node)
+        {
+            string name = node.Name;
+            switch(name)
+            {
+                case "switch":
+                    return new SwitchPacketField()
+                    {
+                        Name = node.Attributes.GetNamedItem("name")?.InnerText,
+                        ReferencesId = node.Attributes.GetNamedItem("ref")?.InnerText,
+                        SubFields = new List<CasePacketField>(GetSubFields(node).Cast<CasePacketField>()) 
+                    };
+                case "list":
+                    return new ListPacketField()
+                    {
+                        Name = node.Attributes.GetNamedItem("name")?.InnerText,
+                        ReferencesId = node.Attributes.GetNamedItem("ref")?.InnerText,
+                        SubFields = GetSubFields(node)
+                    };
+                case "flags":
+                    return new FlagsPacketField()
+                    {
+                        Name = node.Attributes.GetNamedItem("name")?.InnerText,
+                        ReferencesId = node.Attributes.GetNamedItem("ref")?.InnerText,
+                        SubFields = new List<CasePacketField>(GetSubFields(node).Cast<CasePacketField>())
+                    };
+                case "case":
+                    return new CasePacketField()
+                    {
+                        Value = node.Attributes.GetNamedItem("value").InnerText,
+                        SubFields = GetSubFields(node)
+                    };
+                case "conditional":
+                    return new ConditionalPacketField()
+                    {
+                        Name = node.Attributes.GetNamedItem("name")?.InnerText,
+                        ReferencesId = node.Attributes.GetNamedItem("ref")?.InnerText,
+                        Condition = node.Attributes.GetNamedItem("condition").InnerText,
+                        SubFields = GetSubFields(node),
+                    };
+                case "field":
+                    return new ValuePacketField()
+                    {
+                        Name = node.Attributes.GetNamedItem("name")?.InnerText,
+                        Type = node.Attributes.GetNamedItem("type")?.InnerText,
+                        ReferenceId = node.Attributes.GetNamedItem("refId")?.InnerText
+                    };
+                default:
+                    throw new Exception("Unknown field type: " + name);
+
+            }
         }
 
         public async void DecodeCommand(Packet packet)

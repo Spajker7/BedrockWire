@@ -7,6 +7,7 @@
         x:Class="BedrockWire.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="BedrockWire"
+		WindowState="Maximized"
 		xmlns:local="clr-namespace:BedrockWire;assembly=BedrockWire">
 
 	<Window.Resources>
@@ -22,15 +23,23 @@
 
 	<DockPanel>
 		<Border DockPanel.Dock="Top" BorderThickness="0 0 0 1" BorderBrush="Gray" Padding="5">
-			<StackPanel Orientation="Horizontal" Spacing="10">
-				<Button Command="{Binding OnOpenCommand}" CommandParameter="{Binding $parent[Window]}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Open Packet Dump</Button>
-				<Button Command="{Binding OnLoadProtocolCommand}" CommandParameter="{Binding $parent[Window]}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Load Protocol Definition</Button>
-			</StackPanel>
+			<Grid>
+				<StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Spacing="10">
+					<Button Command="{Binding OnOpenCommand}" CommandParameter="{Binding $parent[Window]}" IsEnabled="{Binding !IsLive}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Open Packet Dump</Button>
+					<Button Command="{Binding OnStartProxyCommand}" CommandParameter="{Binding $parent[Window]}" IsVisible="{Binding !IsLive}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Start Proxy</Button>
+					<Button Command="{Binding OnStopProxyCommand}" CommandParameter="{Binding $parent[Window]}" IsVisible="{Binding IsLive}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Stop Proxy</Button>
+					<Button Command="{Binding OnClearCommand}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Clear</Button>
+				</StackPanel>
+				<StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="10">
+					<Button Command="{Binding OnLoadProtocolCommand}" CommandParameter="{Binding $parent[Window]}" HorizontalContentAlignment="Center" IsEnabled="{Binding !IsLive}" VerticalContentAlignment="Center" FontSize="10" Height="24">Load Protocol Definition</Button>
+				</StackPanel>
+			</Grid>
 		</Border>
 		<Border DockPanel.Dock="Top" BorderThickness="0 0 0 1" BorderBrush="Gray" Padding="2">
 			<StackPanel Orientation="Horizontal" Spacing="10">
 				<TextBox Width="400" MinHeight="24" Height="24" Padding="2" Text="{Binding FilterText, Mode=OneWayToSource}"></TextBox>
-				<CheckBox FontSize="10" IsChecked="{Binding FilterOutMoveDelta, Mode=OneWayToSource}">Filter out "noisy" packets</CheckBox>
+				<CheckBox FontSize="10" IsChecked="{Binding FilterOutNoise, Mode=OneWayToSource}">Filter out "noisy" packets</CheckBox>
+				<CheckBox FontSize="10" IsChecked="{Binding FilterOutGood, Mode=OneWayToSource}">Only show errors</CheckBox>
 			</StackPanel>
 		</Border>
 		<Border DockPanel.Dock="Bottom" BorderThickness="0 1 0 0" BorderBrush="Gray" Padding="2">
@@ -39,27 +48,36 @@
 			</StackPanel>
 		</Border>
 		<Grid ColumnDefinitions="*, 4, *">
-			<DataGrid Grid.Column="0" Items="{Binding FilteredPacketList}" SelectedItem="{Binding SelectedPacket}" AutoGenerateColumns="False">
+			<DataGrid x:Name="datagrid" CanUserSortColumns="False" FontSize="10" Grid.Column="0" Items="{Binding FilteredPacketListView}" SelectedItem="{Binding SelectedPacket}" AutoGenerateColumns="False">
 				<DataGrid.Styles>
 					<Style Selector="DataGridRow">
 						<Setter Property="Background" Value="{Binding Error, Mode=OneWay, Converter={StaticResource backgroundColorConverter}}"/>
 					</Style>
+					<Style Selector="DataGridCell">
+						<Setter Property="MinHeight" Value="24" />
+						<Setter Property="Height" Value="24" />
+						<Setter Property="FontSize" Value="12" />
+					</Style>
 				</DataGrid.Styles>
 				<DataGrid.Columns>
+					<DataGridTextColumn Header="#"  Binding="{Binding OrderId}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Direction"  Binding="{Binding Direction}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Time" Binding="{Binding Time, Mode=OneTime, Converter={StaticResource msTimeConverter}}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Packet Name" Binding="{Binding Name}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Length" Binding="{Binding Length}" IsReadOnly="True"/>
+					<!--
+					<DataGridTextColumn Header="DT" Binding="{Binding DecodeTime}" IsReadOnly="True"/>
+					
 					<DataGridTemplateColumn Header="Actions" Width="*" >
 						<DataGridTemplateColumn.CellTemplate>
 							<DataTemplate >
 								<StackPanel Orientation="Horizontal">
-									<Button Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}, Path=DataContext.DecodeCommand}" CommandParameter="{Binding}">Decode</Button>
+									<Button MinHeight="20" Padding="3 0 3 0" VerticalContentAlignment="Center" Height="20" FontSize="14" Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}, Path=DataContext.DecodeCommand}" CommandParameter="{Binding}">Decode</Button>
 								</StackPanel>
 							</DataTemplate>
 						</DataGridTemplateColumn.CellTemplate>
-					</DataGridTemplateColumn>
+					</DataGridTemplateColumn>		-->
 				</DataGrid.Columns>
 			</DataGrid>
 			<GridSplitter Grid.Column="1" MinWidth="1" Width="1" Background="Gray" ResizeDirection="Columns"/>

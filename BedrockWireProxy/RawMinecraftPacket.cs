@@ -35,7 +35,7 @@ namespace BedrockWireProxy
 
 		public override byte[] Encode()
 		{
-			MemoryStream stream =  new MemoryStream();
+			MemoryStream stream = new MemoryStream();
 			VarInt.WriteInt32(stream, Id);
 			stream.Write(Payload.Span);
 			stream.Flush();

@@ -33,13 +33,13 @@ namespace BedrockWireProxy
 		private protected ProxyClientMessageHandler _proxyClientMessageHandler;
 		private readonly AuthData _authData;
 		private readonly IPEndPoint remoteServer;
-		private readonly PacketWriter _packetWriter;
+		private readonly IPacketWriter _packetWriter;
 
 		public RakConnection ClientConnection { get; set; }
 		public CryptoContext? CryptoContext { get; set; }
         public ulong StartTime { get; set; }
 
-        public ProxyServerMessageHandler(RakSession session, IPEndPoint remoteServer, AuthData authData, PacketWriter packetWriter)
+        public ProxyServerMessageHandler(RakSession session, IPEndPoint remoteServer, AuthData authData, IPacketWriter packetWriter)
 		{
 			Session = session;
 			_authData = authData;
@@ -53,7 +53,7 @@ namespace BedrockWireProxy
 
 		public void Disconnect(string reason, bool sendDisconnect = true)
 		{
-
+			_proxyClientMessageHandler.Session.Close();
 		}
 
 		public List<Packet> PrepareSend(List<Packet> packetsToSend)
@@ -241,7 +241,7 @@ namespace BedrockWireProxy
 				if (packet.Id == 0x01) // login packet, special case because of encryption
 				{
 					StartTime = time;
-					_packetWriter.WritePacket(PacketDirection.Serverbound, packet, 0);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Serverbound, packet, 0);
 
 					MemoryStreamReader reader = new MemoryStreamReader(packet.Payload);
 					int protocol = BinaryPrimitives.ReverseEndianness(reader.ReadInt32());
@@ -450,7 +450,7 @@ namespace BedrockWireProxy
 				}
 				else
 				{
-					_packetWriter.WritePacket(PacketDirection.Serverbound, packet, time - StartTime);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Serverbound, packet, time - StartTime);
 					_proxyClientMessageHandler.Session.SendPacket(packet);
 				}
 			}

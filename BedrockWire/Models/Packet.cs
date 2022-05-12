@@ -9,7 +9,7 @@ namespace BedrockWire.Models
 {
     public class Packet : ReactiveObject
     {
-        
+        public uint OrderId { get; set; }
         public string Direction { get; set; }
         public int Id { get; set; }
         public ulong Time { get; set; }
@@ -21,6 +21,7 @@ namespace BedrockWire.Models
         private string _name;
         private Dictionary<object, object> _decoded;
         private string _error;
+        private string _decodeTime;
 
         public string Name 
         {
@@ -36,6 +37,12 @@ namespace BedrockWire.Models
         {
             get { return _error; }
             set { this.RaiseAndSetIfChanged(ref _error, value); }
+        }
+
+        public string DecodeTime
+        {
+            get { return _decodeTime; }
+            set { this.RaiseAndSetIfChanged(ref _decodeTime, value); }
         }
     }
 }

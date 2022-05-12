@@ -18,6 +18,9 @@ namespace BedrockWire
         private TreeViewItem ObjectToTreeViewItem(string name, object obj)
         {
             TreeViewItem item = new TreeViewItem();
+            item.FontSize = 14;
+            item.MinHeight = 24;
+       
 
             if (obj is Dictionary<object, object> dict)
             {
@@ -37,7 +40,7 @@ namespace BedrockWire
 
                 if(text.Length > 40)
                 {
-                    text = text.Substring(0, 40) + "...";
+                    text = "...";
                 }
                 
                 

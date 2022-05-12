@@ -70,7 +70,7 @@
 						<field name="Value" type="nbt" />
 					</case>
 					<case value="6">
-						<field name="Value" type="posvarInt" />
+						<field name="Value" type="posVarInt" />
 					</case>
 					<case value="7">
 						<field name="Value" type="varLong" />
@@ -81,7 +81,7 @@
 				</switch>
 			</list>
 		</type>
-		<type name="posvarInt">
+		<type name="posVarInt">
 			<field name="X" type="varInt"/>
 			<field name="Y" type="varInt"/>
 			<field name="Z" type="varInt"/>
@@ -145,10 +145,10 @@
 			</conditional>
 			<field name="Transaction Type" type="unsignedVarInt" refId="transactionType" />
 			<field name="Records" type="transactionRecords" />
-			<switch ref="transactionType">
+			<switch ref="transactionType" name="TransactionData">
 				<case value="2">
 					<field name="Action Type" type="unsignedVarInt" />
-					<field name="Position" type="posvarInt" />
+					<field name="Position" type="posVarInt" />
 					<field name="Face" type="varInt" />
 					<field name="Slot" type="varInt" />
 					<field name="Item" type="item" />
@@ -171,6 +171,186 @@
 					<field name="From Position" type="posFloat" />
 				</case>
 			</switch>
+		</type>
+		<type name="ingredient">
+			<field name="Id" type="varInt" />
+			<conditional condition="!0">
+				<field name="Meta" type="varInt" />
+				<field name="Count" type="varInt" />
+			</conditional>
+		</type>
+		<type name="shapelessRecepie">
+			<field name="RecepieId" type="string" />
+			<field name="Ingredients" type="unsignedVarInt" />
+			<list>
+				<field type="ingredient" />
+			</list>
+			<field name="Output" type="unsignedVarInt" />
+			<list>
+				<field name="Id" type="itemNonUnique" />
+			</list>
+			<field name="UUID" type="uuid" />
+			<field name="Block" type="string" />
+			<field name="Priority" type="varInt" />
+			<field name="NetworkId" type="varInt" />
+		</type>
+		<type name="shapedRecepie">
+			<field name="RecepieId" type="string" />
+			<field name="Ingredients" type="doubleVarIntProduct" />
+			<list>
+				<field type="ingredient" />
+			</list>
+			<field name="Output" type="unsignedVarInt" />
+			<list>
+				<field name="Id" type="itemNonUnique" />
+			</list>
+			<field name="UUID" type="uuid" />
+			<field name="Block" type="string" />
+			<field name="Priority" type="varInt" />
+			<field name="NetworkId" type="varInt" />
+		</type>
+		<type name="skinImage">
+			<field name="Width" type="int" />
+			<field name="Height" type="int" />
+			<field name="Data" type="byteArray" />
+		</type>
+		<type name="skin">
+			<field name="SkinId" type="string" />
+			<field name="SkinPlayFabId" type="string" />
+			<field name="SkinResourcePatch" type="string" />
+			<field name="SkinImage" type="skinImage" />
+			<field name="Animations" type="int" />
+			<list>
+				<field name="SkinImage" type="skinImage" />
+				<field name="Type" type="int" />
+				<field name="Frames" type="float" />
+				<field name="ExpressionType" type="int" />
+			</list>
+			<field name="CapeData" type="skinImage" />
+			<field name="GeometryData" type="string" />
+			<field name="GeometryDataVersion" type="string" />
+			<field name="AnimationData" type="string" />
+			<field name="CapeId" type="string" />
+			<field name="FullSkinId" type="string" />
+			<field name="ArmSize" type="string" />
+			<field name="SkinColor" type="string" />
+			<field name="PersonaPieces" type="int" />
+			<list>
+				<field name="PieceId" type="string" />
+				<field name="PieceType" type="string" />
+				<field name="PackId" type="string" />
+				<field name="IsDefaultPiece" type="bool" />
+				<field name="ProductId" type="string" />
+			</list>
+			<field name="PieceTintColor" type="int" />
+			<list>
+				<field name="PieceType" type="string" />
+				<field name="Colors" type="int" />
+				<list>
+					<field name="Color" type="string" />
+				</list>
+			</list>
+			<field name="Premium" type="bool" />
+			<field name="Persona" type="bool" />
+			<field name="CapeOnClassic" type="bool" />
+			<field name="IsPrimaryUser" type="bool" />
+		</type>
+		<type name="itemStackRequestSlotInfo">
+			<field name="ContainerId" type="byte" />
+			<field name="SlotId" type="byte" />
+			<field name="StackId" type="varInt" />
+		</type>
+		<type name="itemStackRequest">
+			<field name="RequestId" type="varInt" />
+			<field name="Actions" type="unsignedVarInt" />
+			<list>
+				<field name="TypeId" type="byte" />
+				<switch>
+					<case value="0">
+						<field name="Count" type="byte" />
+						<field name="Source" type="itemStackRequestSlotInfo" />
+						<field name="Destination" type="itemStackRequestSlotInfo" />
+					</case>
+					<case value="1">
+						<field name="Count" type="byte" />
+						<field name="Source" type="itemStackRequestSlotInfo" />
+						<field name="Destination" type="itemStackRequestSlotInfo" />
+					</case>
+					<case value="2">
+						<field name="Source" type="itemStackRequestSlotInfo" />
+						<field name="Destination" type="itemStackRequestSlotInfo" />
+					</case>
+					<case value="3">
+						<field name="Count" type="byte" />
+						<field name="Source" type="itemStackRequestSlotInfo" />
+						<field name="Random" type="bool" />
+					</case>
+					<case value="4">
+						<field name="Count" type="byte" />
+						<field name="Source" type="itemStackRequestSlotInfo" />
+					</case>
+					<case value="5">
+						<field name="Count" type="byte" />
+						<field name="Source" type="itemStackRequestSlotInfo" />
+					</case>
+					<case value="6">
+						<field name="Slot" type="byte" />
+					</case>
+					<case value="7">
+						<field name="Count" type="byte" />
+						<field name="Source" type="itemStackRequestSlotInfo" />
+						<field name="Destination" type="itemStackRequestSlotInfo" />
+					</case>
+					<case value="8">
+						<field name="Count" type="byte" />
+						<field name="Source" type="itemStackRequestSlotInfo" />
+						<field name="Destination" type="itemStackRequestSlotInfo" />
+					</case>
+					<case value="9">
+						
+					</case>
+					<case value="10">
+						<field name="PrimaryEffectId" type="varInt" />
+						<field name="SecondaryEffectId" type="varInt" />
+					</case>
+					<case value="11">
+						<field name="Unknown" type="varInt" />
+						<field name="PredictedDurability" type="varInt" />
+						<field name="StackId" type="varInt" />
+					</case>
+					<case value="12">
+						<field name="RecipeId" type="varInt" />
+					</case>
+					<case value="13">
+						<field name="RecipeId" type="varInt" />
+						<field name="Repetitions" type="byte" />
+					</case>
+					<case value="14">
+						<field name="CreativeItemId" type="varInt" />
+					</case>
+					<case value="15">
+						<field name="RecipeId" type="varInt" />
+						<field name="FilterStringIndex" type="int" />
+					</case>
+					<case value="16">
+						<field name="RecipeId" type="varInt" />
+						<field name="RepairCost" type="varInt" />
+					</case>
+					<case value="17">
+						<field name="PatternId" type="string" />
+					</case>
+					<case value="18">
+
+					</case>
+					<case value="19">
+						<field name="Results" type="unsignedVarInt" />
+						<list>
+							<field name="Item" type="itemNonUnique" />
+						</list>
+						<field name="Iterations" type="byte" />
+					</case>
+				</switch>
+			</list>
 		</type>
 	</types>
 	<packets>
@@ -246,7 +426,60 @@
 		</packet>
 
 		<packet id="0x09" name="MCPE_TEXT">
-			<field name="Type" type="byte" />
+			<field name="Type" type="byte" refId="type" />
+			<field name="NeedsTranslation" type="bool" />
+			<switch name="Data" ref="type">
+				<case value="0">
+					<field name="Message" type="string" />
+				</case>
+				<case value="1">
+					<field name="Source" type="string" />
+					<field name="Message" type="string" />
+				</case>
+				<case value="2">
+					<field name="Message" type="string" />
+					<field name="Parameters" type="unsignedVarInt" />
+					<list>
+						<field name="Param" type="string" />
+					</list>
+				</case>
+				<case value="3">
+					<field name="Message" type="string" />
+					<field name="Parameters" type="unsignedVarInt" />
+					<list>
+						<field name="Param" type="string" />
+					</list>
+				</case>
+				<case value="4">
+					<field name="Message" type="string" />
+					<field name="Parameters" type="unsignedVarInt" />
+					<list>
+						<field name="Param" type="string" />
+					</list>
+				</case>
+				<case value="5">
+					<field name="Message" type="string" />
+				</case>
+				<case value="6">
+					<field name="Message" type="string" />
+				</case>
+				<case value="7">
+					<field name="Source" type="string" />
+					<field name="Message" type="string" />
+				</case>
+				<case value="8">
+					<field name="Source" type="string" />
+					<field name="Message" type="string" />
+				</case>
+				<case value="9">
+					<field name="Message" type="string" />
+				</case>
+				<case value="10">
+					<field name="Message" type="string" />
+				</case>
+			</switch>
+			<field name="XUID" type="string" />
+			<field name="PlatformChatId" type="string" />
 		</packet>
 
 		<packet id="0x0a" name="MCPE_SET_TIME">
@@ -336,9 +569,10 @@
 		<packet id="0x12" name="MCPE_MOVE_ENTITY">
 			<field name="Runtime Entity ID" type="unsignedVarLong" />
 			<field name="Flags" type="byte" />
-			<field name="Position" type="PlayerLocation" />
-			<!--<field name="On Ground" type="bool" />
-		<field name="Teleport" type="bool" />-->
+			<field name="Position" type="posFloat" />
+			<field name="Pitch" type="rotationalFloat" />
+			<field name="Yaw" type="rotationalFloat" />
+			<field name="HeadYaw" type="rotationalFloat" />
 		</packet>
 
 		<packet id="0x13" name="MCPE_MOVE_PLAYER">
@@ -349,9 +583,14 @@
 			<field name="Pitch" type="float" />
 			<field name="Yaw" type="float" />
 			<field name="Head Yaw" type="float" />
-			<field name="Mode" type="byte" />
+			<field name="Mode" type="byte" refId="mode"/>
 			<field name="On Ground" type="bool" />
 			<field name="Other Runtime Entity ID" type="unsignedVarLong" />
+			<conditional ref="mode" condition="2" name="TeleportData">
+				<field name="TeleportCause" type="int" />
+				<field name="TeleportItem" type="int" />
+			</conditional>
+			<field name="Tick" type="unsignedVarLong" />
 		</packet>
 
 		<packet id="0x14" name="MCPE_RIDER_JUMP">
@@ -359,7 +598,7 @@
 		</packet>
 
 		<packet id="0x15" name="MCPE_UPDATE_BLOCK">
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Block Runtime ID" type="unsignedVarInt" />
 			<field name="Block Priority" type="unsignedVarInt" />
 			<field name="Storage" type="unsignedVarInt" />
@@ -368,7 +607,7 @@
 		<packet id="0x16" name="MCPE_ADD_PAINTING">
 			<field name="Entity ID Self" type="varLong" />
 			<field name="Runtime Entity ID" type="unsignedVarLong" />
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Direction" type="varInt" />
 			<field name="Title" type="string" />
 		</packet>
@@ -394,7 +633,7 @@
 		</packet>
 
 		<packet id="0x1a" name="MCPE_BLOCK_EVENT">
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Case 1" type="varInt" />
 			<field name="Case 2" type="varInt" />
 		</packet>
@@ -469,7 +708,7 @@
 		<packet id="0x24" name="MCPE_PLAYER_ACTION">
 			<field name="Runtime Entity ID" type="unsignedVarLong" />
 			<field name="Action ID" type="varInt" />
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Face" type="varInt" />
 		</packet>
 
@@ -503,9 +742,9 @@
 
 		<packet id="0x2b" name="MCPE_SET_SPAWN_POSITION">
 			<field name="Spawn Type" type="varInt" />
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Dimension" type="varInt" />
-			<field name="Unknown coordinates" type="posvarInt" />
+			<field name="Unknown coordinates" type="posVarInt" />
 		</packet>
 
 		<packet id="0x2c" name="MCPE_ANIMATE">
@@ -524,7 +763,7 @@
 		<packet id="0x2e" name="MCPE_CONTAINER_OPEN">
 			<field name="Window ID" type="byte" />
 			<field name="Type" type="byte" />
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Runtime Entity ID" type="varLong" />
 		</packet>
 
@@ -557,10 +796,66 @@
 		</packet>
 
 		<packet id="0x34" name="MCPE_CRAFTING_DATA">
-			<field name="Recipes" type="Recipes" />
-			<field name="Potion type recipes" type="PotionTypeRecipe[]" />
-			<field name="potion container recipes" type="PotionContainerChangeRecipe[]" />
-			<field name="Material reducer recipes" type="MaterialReducerRecipe[]" />
+			<field name="Recipes" type="unsignedVarInt" />
+			<list>
+				<field name="RecipeType" type="varInt" />
+				<switch>
+					<case value="0">
+						<field type="shapelessRecepie" />
+					</case>
+					<case value="1">
+						<field type="shapedRecepie" />
+					</case>
+					<case value="2">
+						<field name="InputId" type="varInt" />
+						<field name="Id" type="itemNonUnique" />
+						<field name="Block" type="string" />
+					</case>
+					<case value="3">
+						<field name="InputId" type="varInt" />
+						<field name="InputData" type="varInt" />
+						<field name="Id" type="itemNonUnique" />
+						<field name="Block" type="string" />
+					</case>
+					<case value="4">
+						<field name="UUID" type="uuid" />
+						<field name="NetworkId" type="varInt" />
+					</case>
+					<case value="5">
+						<field type="shapelessRecepie" />
+					</case>
+					<case value="6">
+						<field type="shapelessRecepie" />
+					</case>
+					<case value="7">
+						<field type="shapedRecepie" />
+					</case>
+				</switch>
+			</list>
+			<field name="PotionTypeRecipes" type="unsignedVarInt" />
+			<list>
+				<field name="InputId" type="varInt" />
+				<field name="InputMeta" type="varInt" />
+				<field name="IngredientId" type="varInt" />
+				<field name="IngredientMeta" type="varInt" />
+				<field name="OutputId" type="varInt" />
+				<field name="OutputMeta" type="varInt" />
+			</list>
+			<field name="PotionContainerRecipes" type="unsignedVarInt" />
+			<list>
+				<field name="Input" type="varInt" />
+				<field name="Ingredient" type="varInt" />
+				<field name="Output" type="varInt" />
+			</list>
+			<field name="MaterialReducerRecipes" type="unsignedVarInt" />
+			<list>
+				<field name="InputIdAndData" type="varInt" />
+				<field name="Outputs" type="unsignedVarInt" />
+				<list>
+					<field name="OutputItemId" type="varInt" />
+					<field name="OutputItemCount" type="varInt" />
+				</list>
+			</list>
 			<field name="Is Clean" type="bool" />
 		</packet>
 
@@ -586,7 +881,7 @@
 		</packet>
 
 		<packet id="0x38" name="MCPE_BLOCK_ENTITY_DATA">
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="NamedTag" type="nbt" />
 		</packet>
 
@@ -634,7 +929,7 @@
 			<field name="Record Type" type="byte" />
 			<switch>
 				<case value="0">
-					<field name="Records" type="unsignedVarInt" />
+					<field name="Records" type="unsignedVarInt" refId="recordsCount" />
 					<list>
 						<field name="UUID" type="uuid" />
 						<field name="Entity Id" type="varLong" />
@@ -645,6 +940,15 @@
 						<field name="Skin" type="skin" />
 						<field name="IsTeacher" type="bool" />
 						<field name="IsHost" type="bool" />
+					</list>
+					<list ref="recordsCount" name="SkinsVerified">
+						<field name="SkinVerified" type="bool" />
+					</list>
+				</case>
+				<case value="1">
+					<field name="Records" type="unsignedVarInt" />
+					<list>
+						<field name="UUID" type="uuid" />
 					</list>
 				</case>
 			</switch>
@@ -683,11 +987,27 @@
 		</packet>
 
 		<packet id="0x47" name="MCPE_item_FRAME_DROP_item">
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 		</packet>
 
 		<packet id="0x48" name="MCPE_GAME_RULES_CHANGED">
-			<field name="Rules" type="GameRules" />
+			<field name="Rules" type="unsignedVarInt" />
+			<list>
+				<field name="Name" type="string" />
+				<field name="IsPlayerModifiable" type="bool" />
+				<field name="Type" type="unsignedVarInt" />
+				<switch>
+					<case value="1">
+						<field name="Value" type="bool" />
+					</case>
+					<case value="2">
+						<field name="Value" type="unsignedVarInt" />
+					</case>
+					<case value="3">
+						<field name="Value" type="float" />
+					</case>
+				</switch>
+			</list>
 		</packet>
 
 		<packet id="0x49" name="MCPE_CAMERA">
@@ -696,17 +1016,6 @@
 		</packet>
 
 		<packet id="0x4a" name="MCPE_BOSS_EVENT">
-			<enums id="Type">
-				<enum id="Add Boss" value="0" />
-				<enum id="Add Player" value="1" />
-				<enum id="Remove boss" value="2" />
-				<enum id="Remove Player" value="3" />
-				<enum id="Update Progress" value="4" />
-				<enum id="Update Name" value="5" />
-				<enum id="Update Options" value="6" />
-				<enum id="Update Style" value="7" />
-				<enum id="Query" value="8" />
-			</enums>
 			<field name="Boss Entity ID" type="varLong" />
 			<field name="Event Type" type="unsignedVarInt" />
 		</packet>
@@ -791,7 +1100,7 @@
 
 		<packet id="0x56" name="MCPE_PLAY_SOUND">
 			<field name="Name" type="string" />
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Volume" type="float" />
 			<field name="Pitch" type="float" />
 		</packet>
@@ -802,14 +1111,6 @@
 		</packet>
 
 		<packet id="0x58" name="MCPE_SET_TITLE">
-			<!--
-		TYPE_CLEAR_TITLE = 0;
-		TYPE_RESET_TITLE = 1;
-		TYPE_SET_TITLE = 2;
-		TYPE_SET_SUBTITLE = 3;
-		TYPE_SET_ACTIONBAR_MESSAGE = 4;
-		TYPE_SET_ANIMATION_TIMES = 5;		
-		-->
 			<field name="Type" type="varInt" />
 			<field name="Text" type="string" />
 			<field name="Fade In Time" type="varInt" />
@@ -908,18 +1209,8 @@
 		</packet>
 
 		<packet id="0x6c" name="MCPE_SET_SCORE">
-			<enums id="Types">
-				<enum id="Change" value="0" />
-				<enum id="Remove" value="1" />
-			</enums>
-			<enums id="Change Types">
-				<enum id="Player" value="1" />
-				<enum id="Entity" value="2" />
-				<enum id="Fake Player" value="3" />
-			</enums>
 			<field name="Entries" type="ScoreEntries" />
 		</packet>
-
 
 		<packet id="0x6d" name="MCPE_LAB_TABLE">
 			<field name="Useless Byte" type="byte" />
@@ -930,7 +1221,7 @@
 		</packet>
 
 		<packet id="0x6e" name="MCPE_UPDATE_BLOCK_SYNCED">
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Block Runtime ID" type="unsignedVarInt" />
 			<field name="Block Priority" type="unsignedVarInt" />
 			<field name="Data Layer ID" type="unsignedVarInt" />
@@ -964,10 +1255,6 @@
 		</packet>
 
 		<packet id="0x70" name="MCPE_SET_SCOREBOARD_IDENTITY">
-			<enums id="Operations">
-				<enum id="Register Identity" value="0" />
-				<enum id="Clear Identity" value="1" />
-			</enums>
 			<field name="Entries" type="ScoreboardIdentityEntries" />
 		</packet>
 
@@ -1010,7 +1297,7 @@
 		</packet>
 
 		<packet id="0x79" name="MCPE_NETWORK_CHUNK_PUBLISHER_UPDATE">
-			<field name="Coordinates" type="posvarInt" />
+			<field name="Coordinates" type="posVarInt" />
 			<field name="Radius" type="unsignedVarInt" />
 		</packet>
 
@@ -1028,6 +1315,8 @@
 		</packet>
 
 		<packet id="0x7c" name="MCPE_LEVEL_EVENT_GENERIC">
+			<field name="EventId" type="varInt" />
+			<field name="EventData" type="nbt" />
 		</packet>
 
 		<packet id="0x7d" name="MCPE_LECTERN_UPDATE">
@@ -1062,68 +1351,112 @@
 		</packet>
 
 		<packet id="0x87" name="MCPE_CLIENT_CACHE_BLOB_STATUS">
-			<!--<field name="Hash Misses" type="ulong[]" />
-		<field name="Hash Hits" type="ulong[]" />-->
+			<field name="MissHashes" type="unsignedVarInt" refId="missHashes" />
+			<field name="HitHashes" type="unsignedVarInt" refId="hitHashes" />
+			<list ref="missHashes">
+				<field name="Hash" type="long" />
+			</list>
+			<list ref="hitHashes">
+				<field name="Hash" type="long" />
+			</list>
 		</packet>
 
 		<packet id="0x88" name="MCPE_CLIENT_CACHE_MISS_RESPONSE">
+			<field name="Blobs" type="unsignedVarInt" />
+			<list>
+				<field name="Hash" type="long" />
+				<field name="Payload" type="byteArray" />
+			</list>
 		</packet>
 
 		<packet id="0x8f" name="MCPE_NETWORK_SETTINGS">
-			<enums id="Compression">
-				<enum id="Nothing" value="0" />
-				<enum id="Everything" value="1" />
-			</enums>
-
 			<field name="Unknown" type="byte" />
 			<field name="Compression threshold" type="byte" />
 		</packet>
 
 		<packet id="0x90" name="MCPE_PLAYER_AUTH_INPUT">
+			<field name="Pitch" type="float" />
+			<field name="Yaw" type="float" />
+			<field name="Position" type="posFloat" />
+			<field name="MoveVecX" type="float" />
+			<field name="MoveVecZ" type="float" />
+			<field name="HeadYaw" type="float" />
+			<field name="InputFlags" type="unsignedVarLong" refId="inputFlags" />
+			<field name="InputMode" type="unsignedVarInt" />
+			<field name="PlayMode" type="unsignedVarInt" />
+			<conditional condition="4">
+				<field name="VRGazeDirection" type="posFloat" />
+			</conditional>
+			<field name="Tick" type="unsignedVarLong" />
+			<field name="Delta" type="posFloat" />
+			<flags ref="inputFlags" name="AdditionalInputData">
+				<case value="17179869184">
+					<field name="RequestId" type="varInt" />
+					<conditional condition="!0">
+						<field name="RequestChangedSlots" type="unsignedVarInt" />
+						<list>
+							<field name="ContainerId" type="byte" />
+							<field name="ChangedSlots" type="unsignedVarInt" />
+							<list>
+								<field name="Slot" type="byte" />
+							</list>
+						</list>
+					</conditional>
+					<field name="Action Type" type="unsignedVarInt" />
+					<field name="Position" type="posVarInt" />
+					<field name="Face" type="varInt" />
+					<field name="Slot" type="varInt" />
+					<field name="Item" type="item" />
+					<field name="From Position" type="posFloat" />
+					<field name="Click Position" type="posFloat" />
+					<field name="Block Runtime Id" type="unsignedVarInt" />
+				</case>
+				<case value="68719476736">
+					<field name="ItemStackRequest" type="itemStackRequest" />
+				</case>
+				<case value="34359738368">
+					<field name="BlockActions" type="varInt" />
+					<list>
+						<field name="ActionType" type="varInt" />
+						<switch>
+							<case value="0">
+								<field name="Postition" type="posVarInt" />
+								<field name="Face" type="varInt" />
+							</case>
+							<case value="1">
+								<field name="Postition" type="posVarInt" />
+								<field name="Face" type="varInt" />
+							</case>
+							<case value="2">
 
+							</case>
+							<case value="18">
+								<field name="Postition" type="posVarInt" />
+								<field name="Face" type="varInt" />
+							</case>
+							<case value="26">
+								<field name="Postition" type="posVarInt" />
+								<field name="Face" type="varInt" />
+							</case>
+							<case value="27">
+								<field name="Postition" type="posVarInt" />
+								<field name="Face" type="varInt" />
+							</case>
+						</switch>
+					</list>
+				</case>
+			</flags>
 		</packet>
 
 		<packet id="0x91" name="MCPE_CREATIVE_CONTENT">
 			<field name="Input" type="creativeitemStacks" />
 		</packet>
 
-		<!--
-	public const PLAYER_AUTH_INPUT_PACKET = 0x90;
-	public const PLAYER_ARMOR_DAMAGE_PACKET = 0x95;
-	public const CODE_BUILDER_PACKET = 0x96;
-	public const UPDATE_PLAYER_GAME_TYPE_PACKET = 0x97;
-	public const EMOTE_LIST_PACKET = 0x98;
-	public const POSITION_TRACKING_D_B_SERVER_BROADCAST_PACKET = 0x99;
-	public const POSITION_TRACKING_D_B_CLIENT_REQUEST_PACKET = 0x9a;
-	public const DEBUG_INFO_PACKET = 0x9b;
-	-->
 		<packet id="0x92" name="MCPE_PLAYER_ENCHANT_OPTIONS">
 			<field name="Enchant options" type="EnchantOptions" />
 		</packet>
 
 		<packet id="0x93" name="MCPE_item_STACK_REQUEST">
-			<enums id="Action type">
-				<enum id="Take" value="0" />
-				<enum id="Place" value="1" />
-				<enum id="Swap" value="2" />
-				<enum id="Drop" value="3" />
-				<enum id="Destroy" value="4" />
-				<enum id="Consume" value="5" />
-				<enum id="Create" value="6" />
-				<enum id="Place into bundle" value="7" />
-				<enum id="Take from bundle" value="8" />
-				<enum id="Lab table combine" value="9" />
-				<enum id="Beacon payment" value="10" />
-				<enum id="Mine Block" value="11"/>
-				<enum id="Craft recipe" value="12" />
-				<enum id="Craft recipe Auto" value="13" />
-				<enum id="Craft creative" value="14" />
-				<enum id="Craft recipe optional" value="15" />
-				<enum id="Craft Grindstone" value="16"/>
-				<enum id="Craft loom" value="17"/>
-				<enum id="Craft not implemented deprecated" value="18"/>
-				<enum id="Craft results deprecated" value="19" />
-			</enums>
 			<field name="Requests" type="itemStackRequests" />
 		</packet>
 
@@ -1143,7 +1476,7 @@
 		<packet id="0xa2" name="MCPE_ITEM_COMPONENT">
 			<field name="Entries" type="unsignedVarInt" />
 			<list>
-				<field name="Name" type="string" /> 
+				<field name="Name" type="string" />
 				<field name="nbt" type="nbt"/>
 			</list>
 		</packet>
@@ -1154,21 +1487,71 @@
 		</packet>
 
 		<packet id="0xac" name="MCPE_UPDATE_SUB_CHUNK_BLOCKS_PACKET">
-			<field name="Subchunk coordinates" type="posvarInt"/>
-			<field name="Layer zero updates" type="UpdateSubChunkBlocksPacketEntry[]"/>
-			<field name="Layer one updates" type="UpdateSubChunkBlocksPacketEntry[]"/>
+			<field name="SubchunkCoordinates" type="posVarInt"/>
+			<field name="Layer0Updates" type="unsignedVarInt"/>
+			<list>
+				<field name="BlockPosition" type="posVarInt"/>
+				<field name="BlockRuntimeId" type="unsignedVarInt"/>
+				<field name="UpdateFlags" type="unsignedVarInt"/>
+				<field name="SyncedUpdateEntityUniqueId" type="unsignedVarLong"/>
+				<field name="SyncedUpdateType" type="unsignedVarInt"/>
+			</list>
+			<field name="Layer1Updates" type="unsignedVarInt"/>
+			<list>
+				<field name="BlockPosition" type="posVarInt"/>
+				<field name="BlockRuntimeId" type="unsignedVarInt"/>
+				<field name="UpdateFlags" type="unsignedVarInt"/>
+				<field name="SyncedUpdateEntityUniqueId" type="unsignedVarLong"/>
+				<field name="SyncedUpdateType" type="unsignedVarInt"/>
+			</list>
 		</packet>
 
 		<packet id="0xae" name="MCPE_SUB_CHUNK_PACKET">
-			<field name="Cache enabled" type="bool" />
+			<field name="Cache enabled" type="bool" refId="cacheEnabled"/>
 			<field name="Dimension" type="varInt" />
-			<field name="Subchunk coordinates" type="posvarInt"/>
-
+			<field name="SubchunkCoordinates" type="posVarInt"/>
+			<switch ref="cacheEnabled" name="Data">
+				<case value="True">
+					<field name="Entries" type="unsignedInt"/>
+					<list>
+						<field name="OffsetX" type="byte" />
+						<field name="OffsetY" type="byte" />
+						<field name="OffsetZ" type="byte" />
+						<field name="RequestResult" type="byte" />
+						<conditional condition="!6">
+							<field name="Data" type="byteArray" />
+						</conditional>
+						<field name="HeightMapDataType" type="byte" />
+						<switch>
+							<case value="1">
+								<field name="Heightmap" type="fixed256" />
+							</case>
+						</switch>
+						<field name="Hash" type="long"/>
+					</list>
+				</case>
+				<case value="False">
+					<field name="Entries" type="int"/>
+					<list>
+						<field name="OffsetX" type="byte" />
+						<field name="OffsetY" type="byte" />
+						<field name="OffsetZ" type="byte" />
+						<field name="RequestResult" type="byte" />
+						<field name="Data" type="byteArray" />
+						<field name="HeightMapDataType" type="byte" />
+						<switch>
+							<case value="1">
+								<field name="Heightmap" type="fixed256"></field>
+							</case>
+						</switch>
+					</list>
+				</case>
+			</switch>
 		</packet>
 
 		<packet id="0xaf" name="MCPE_SUB_CHUNK_REQUEST_PACKET">
 			<field name="Dimension" type="varInt" />
-			<field name="Base Position" type="posvarInt"/>
+			<field name="Base Position" type="posVarInt"/>
 			<field name="Offsets" type="int" />
 			<list>
 				<field name="Offset" type="posByte"/>

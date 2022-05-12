@@ -23,29 +23,33 @@ namespace BedrockWireAuthDumpCli
 
 			AuthDump authDump = new AuthDump();
 
-			var result = authDump.StartDeviceCode().Result;
+			var result = authDump.RequestDeviceCode().Result;
 			Console.WriteLine("Verification url: " + result.verificationUrl);
 			Console.WriteLine("Code: " + result.userCode);
 
-			var res = authDump.StartPolling().Result;
+			var res = authDump.StartDeviceCodePolling(result.deviceCode).Result;
 
-			if(res.success)
+			if(res != null)
 			{
-				var keys = AuthDump.SerializeKeys(res.minecraftKeyPair);
-				dynamic a = JObject.Parse(res.minecraftChain);
-				a.privateKey = keys.priv;
-				a.publicKey = keys.pub;
+				var res2 = authDump.GetMinecraftChain(res.AccessToken, res.DeviceId).Result;
+				if(res2.success)
+                {
+					var keys = AuthDump.SerializeKeys(res2.minecraftKeyPair);
+					dynamic a = JObject.Parse(res2.minecraftChain);
+					a.privateKey = keys.priv;
+					a.publicKey = keys.pub;
 
-				using (StreamWriter writer = new StreamWriter(options.Output))
-				{
-					writer.Write(JsonConvert.SerializeObject(a));
-				}
-
-				if(options.TokenOutput != null)
-				{
-					using (StreamWriter writer = new StreamWriter(options.TokenOutput))
+					using (StreamWriter writer = new StreamWriter(options.Output))
 					{
-						writer.Write(JsonConvert.SerializeObject(res.token));
+						writer.Write(JsonConvert.SerializeObject(a));
+					}
+
+					if (options.TokenOutput != null)
+					{
+						using (StreamWriter writer = new StreamWriter(options.TokenOutput))
+						{
+							writer.Write(JsonConvert.SerializeObject(res));
+						}
 					}
 				}
 			}

@@ -67,12 +67,12 @@ namespace BedrockWireProxy
 		private protected readonly string _skinData;
 		private protected readonly ProxyServerMessageHandler _proxyServerMessageHandler;
 		private protected readonly AuthData _authData;
-		private protected readonly PacketWriter _packetWriter;
+		private protected readonly IPacketWriter _packetWriter;
         public ulong StartTime { get; set; }
 
         public CryptoContext? CryptoContext { get; set; }
 
-		public ProxyClientMessageHandler(RakSession session, AuthData authData, int protocol, string skinData, ProxyServerMessageHandler proxyServerMessageHandler, PacketWriter packetWriter, ulong startTime)
+		public ProxyClientMessageHandler(RakSession session, AuthData authData, int protocol, string skinData, ProxyServerMessageHandler proxyServerMessageHandler, IPacketWriter packetWriter, ulong startTime)
 		{
 			Session = session;
 			_authData = authData;
@@ -174,7 +174,7 @@ namespace BedrockWireProxy
 
 		public void Disconnect(string reason, bool sendDisconnect = true)
 		{
-
+			_proxyServerMessageHandler.Session.Close();
 		}
 
 		public List<Packet> PrepareSend(List<Packet> packetsToSend)
@@ -352,7 +352,7 @@ namespace BedrockWireProxy
 				var time = (ulong)DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 				if (packet.Id == 0x03)
 				{
-					_packetWriter.WritePacket(PacketDirection.Clientbound, packet, time - StartTime);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Clientbound, packet, time - StartTime);
 					MemoryStreamReader reader = new MemoryStreamReader(packet.Payload);
 					int len = (int) VarInt.ReadUInt32(reader);
 					string token = Encoding.UTF8.GetString(reader.Read((ulong) len).ToArray());
@@ -399,7 +399,7 @@ namespace BedrockWireProxy
 				}
 				else
 				{
-					_packetWriter.WritePacket(PacketDirection.Clientbound, packet, time - StartTime);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Clientbound, packet, time - StartTime);
 					_proxyServerMessageHandler.Session.SendPacket(packet);
 				}
 			}
