@@ -1,13 +1,9 @@
-﻿using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
+﻿using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Jose;
 using MiNET;
 using MiNET.Net;
@@ -27,7 +23,7 @@ using SicStream;
 
 namespace BedrockWireProxy
 {
-	public class ProxyServerMessageHandler : ICustomMessageHandler
+    public class ProxyServerMessageHandler : ICustomMessageHandler
 	{
 		public readonly RakSession Session;
 		private protected ProxyClientMessageHandler _proxyClientMessageHandler;
@@ -53,7 +49,11 @@ namespace BedrockWireProxy
 
 		public void Disconnect(string reason, bool sendDisconnect = true)
 		{
-			_proxyClientMessageHandler.Session.Close();
+		}
+
+		public void Closed()
+		{
+			_proxyClientMessageHandler?.Session.Close();
 		}
 
 		public List<Packet> PrepareSend(List<Packet> packetsToSend)

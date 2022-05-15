@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MiNET.LevelDB.Utils;
-using MiNET.Net;
+﻿using MiNET.Net;
+using MiNET.Utils;
 using MiNET.Utils.IO;
 
 namespace BedrockWireProxy
 {
-	public class RawMinecraftPacket : Packet<RawMinecraftPacket>
+    public class RawMinecraftPacket : Packet<RawMinecraftPacket>
 	{
 		public ReadOnlyMemory<byte> Payload { get; private set; }
 

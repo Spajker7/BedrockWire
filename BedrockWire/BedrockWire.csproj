@@ -33,6 +33,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BedrockWireAuthDump\BedrockWireAuthDump.csproj" />
     <ProjectReference Include="..\BedrockWireFormat\BedrockWireFormat.csproj" />
+    <ProjectReference Include="..\BedrockWireProxy\BedrockWireProxy.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Views\StartProxyDialog.axaml.cs">

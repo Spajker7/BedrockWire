@@ -172,9 +172,14 @@ namespace BedrockWireProxy
 			}
 		}
 
+		public void Closed()
+		{
+			_proxyServerMessageHandler?.Session.Close();
+		}
+
 		public void Disconnect(string reason, bool sendDisconnect = true)
 		{
-			_proxyServerMessageHandler.Session.Close();
+			
 		}
 
 		public List<Packet> PrepareSend(List<Packet> packetsToSend)
@@ -404,5 +409,5 @@ namespace BedrockWireProxy
 				}
 			}
 		}
-	}
+    }
 }

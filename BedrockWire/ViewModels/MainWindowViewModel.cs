@@ -7,6 +7,9 @@ using BedrockWire.Models;
 using BedrockWire.Models.PacketFields;
 using BedrockWire.Utils;
 using BedrockWire.Views;
+using BedrockWireAuthDump;
+using BedrockWireFormat;
+using BedrockWireProxy;
 using Newtonsoft.Json;
 using ReactiveUI;
 using System;
@@ -17,13 +20,15 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
+using Packet = BedrockWire.Models.Packet;
 
 namespace BedrockWire.ViewModels
 {
-    public class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel : ViewModelBase, IPacketWriter
     {
         public uint PacketOrder { get; set; }
         public ConcurrentQueue<Packet> PacketList { get; set; }
@@ -34,7 +39,8 @@ namespace BedrockWire.ViewModels
         public string FilterTime { get; set; }
 
         public bool IsLive { get; set; }
-        public Process ProxyProcess { get; set; }
+        public BedrockWireProxy.BedrockWireProxy Proxy { get; set; }
+        public BlockingCollection<Packet> PacketReadQueue { get; set; }
 
         private bool filterOutNoise;
         public bool FilterOutNoise
@@ -90,15 +96,17 @@ namespace BedrockWire.ViewModels
             FilterOutGood = false;
             FilterOutNoise = false;
             IsLive = false;
+            PacketReadQueue = new BlockingCollection<Packet>();
             UpdateStatusText();
 
             if(Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.Exit += (sender, args) =>
                 {
-                    if (ProxyProcess != null)
+                    if (Proxy != null)
                     {
-                        ProxyProcess.Kill();
+                        Proxy.Stop();
+                        Proxy = null;
                     }
                 };
             }
@@ -328,6 +336,62 @@ namespace BedrockWire.ViewModels
             }).Start();
         }
 
+        public void OpenQueueNonFinal(BlockingCollection<Packet> queue)
+        {
+            PacketOrder = 0;
+            PacketList.Clear();
+            FilteredPacketList.Clear();
+
+            new Thread(() =>
+            {
+                Stopwatch sw2 = new Stopwatch();
+                sw2.Start();
+
+                using (ManualResetEvent resetEvent = new ManualResetEvent(false))
+                {
+                    DedicatedThreadPool threadPool = new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount / 2));
+
+                    try
+                    {
+                        while (true)
+                        {
+                            // TODO: memory leak here, this loop needs to close
+                            var packet = queue.Take();
+                            PacketList.Enqueue(packet);
+
+                            threadPool.QueueUserWorkItem(() =>
+                            {
+                                Stopwatch sw = new Stopwatch();
+                                sw.Start();
+                                DecodePacket(packet);
+                                sw.Stop();
+                                packet.DecodeTime = sw.Elapsed.ToString();
+
+                                if (IsPacketVisible(packet))
+                                {
+                                    Dispatcher.UIThread.Post(() =>
+                                    {
+                                        FilteredPacketList.Add(packet);
+                                        UpdateStatusText();
+                                    }, DispatcherPriority.MinValue);
+                                }
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+
+                    sw2.Stop();
+                    DecodeTime = sw2.Elapsed.ToString();
+                    Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        UpdateStatusText();
+                    });
+                }
+            }).Start();
+        }
+
         public async void OnOpenCommand(Window window)
         {
             var dlg = new OpenFileDialog();
@@ -349,55 +413,35 @@ namespace BedrockWire.ViewModels
             }
         }
 
-        private void StartProxy(ProxySettings settings)
-        {
-            string proxyLocation = "BedrockWireProxy.exe"; // TODO: 
-#if DEBUG
-            proxyLocation = "C:\\Users\\Spajk\\Desktop\\leetapp\\BedrockWire\\BedrockWire\\BedrockWireProxyCli\\bin\\Debug\\net6.0\\BedrockWireProxyCli.exe";
-#endif
-
-            string json = Regex.Replace(JsonConvert.SerializeObject(settings.Auth), @"(\\*)" + "\"", @"$1$1\" + "\"");
-
-            ProxyProcess = new Process();
-            // Configure the process using the StartInfo properties.
-            ProxyProcess.StartInfo.FileName = proxyLocation;
-            ProxyProcess.StartInfo.Arguments = "-p " + settings.ProxyPort + " -r " + settings.RemoteServerAddress + " -o stdout -f binary -a " + json;
-            ProxyProcess.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            ProxyProcess.StartInfo.UseShellExecute = false;
-            ProxyProcess.StartInfo.RedirectStandardOutput = true;
-            ProxyProcess.StartInfo.WorkingDirectory = Directory.GetCurrentDirectory();
-            //ProxyProcess.StartInfo.CreateNoWindow = true;
-            ProxyProcess.EnableRaisingEvents = true;
-            ProxyProcess.Start();
-
-            IsLive = true;
-            this.RaisePropertyChanged(nameof(IsLive));
-
-            ProxyProcess.Exited += (sender, args) =>
-            {
-                Dispatcher.UIThread.Post(() =>
-                {
-                    IsLive = false;
-                    this.RaisePropertyChanged(nameof(IsLive));
-                });
-            };
-
-            OpenStreamNonFinal(ProxyProcess.StandardOutput.BaseStream, null);
-        }
-
         public async void OnStartProxyCommand(Window window)
         {
             var dlg = new StartProxyDialog();
             dlg.DataContext = new StartProxyDialogViewModel();
             ProxySettings proxySettings = await dlg.ShowDialog<ProxySettings>(window);
-            StartProxy(proxySettings);
+
+            IPEndPoint remoteServer = IPEndPoint.Parse(proxySettings.RemoteServerAddress);
+            AuthData authData = new AuthData();
+            authData.Chain = proxySettings.Auth.Chain;
+            authData.MinecraftKeyPair = AuthDump.DeserializeKeys(proxySettings.Auth.PrivateKey, proxySettings.Auth.PublicKey);
+
+            Proxy = new BedrockWireProxy.BedrockWireProxy(authData, proxySettings.ProxyPort, remoteServer, this);
+            Proxy.Start();
+
+            IsLive = true;
+            this.RaisePropertyChanged(nameof(IsLive));
+
+            OpenQueueNonFinal(PacketReadQueue);
         }
 
         public async void OnStopProxyCommand(Window window)
         {
-            if (IsLive && ProxyProcess != null)
+            if (IsLive && Proxy != null)
             {
-                ProxyProcess.Kill();
+                Proxy.Stop();
+                IsLive = false;
+                this.RaisePropertyChanged(nameof(IsLive));
+                Proxy = null;
+                PacketReadQueue.CompleteAdding();
             }
         }
 
@@ -599,6 +643,11 @@ namespace BedrockWire.ViewModels
 
                 RefreshFilters();
             }
+        }
+
+        public void WritePacket(PacketDirection direction, RawMinecraftPacket packet, ulong time)
+        {
+            PacketReadQueue.Add(new Packet() { OrderId = PacketOrder++, Name = "UNKNOWN_PACKET", Direction = direction == 0 ? "C -> S" : "S -> C", Id = packet.Id, Payload = packet.Payload.ToArray(), Time = time, Length = (ulong)packet.Payload.Length });
         }
     }
 }

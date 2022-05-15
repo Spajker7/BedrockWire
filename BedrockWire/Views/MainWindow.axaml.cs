@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Threading;
 using BedrockWire.Models;
 using System;
 using System.Collections.ObjectModel;
@@ -38,7 +39,10 @@ namespace BedrockWire.Views
                     {
                         if(args.Action == NotifyCollectionChangedAction.Add && isAtEnd)
                         {
-                            datagrid.ScrollIntoView(collection[collection.Count - 1], null);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                datagrid.ScrollIntoView(collection[collection.Count - 1], null);
+                            }, DispatcherPriority.MinValue);
                         }
                     };
                 }
