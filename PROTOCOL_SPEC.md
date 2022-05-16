@@ -3,16 +3,16 @@ The protocol is specified in an XML file an example of which can be found [here]
 The root of the format looks like this:  
 ```xml
 <protocol gameVersion="1.18.30" protocolVersion="503">
-	<types>
-	    <type name="someName">
-		    <field name="Item1" type="float" />
+    <types>
+        <type name="someName">
+            <field name="Item1" type="float" />
         </type>
-	</types>
-	<packets>
-		<packet id="0x01" name="MCPE_LOGIN">
-			<field name="Protocol Version" type="intBE" />
-			<field name="Ignored" type="unsignedVarInt" />
-		</packet>
+    </types>
+    <packets>
+        <packet id="0x01" name="MCPE_LOGIN">
+            <field name="Protocol Version" type="intBE" />
+            <field name="Ignored" type="unsignedVarInt" />
+        </packet>
         <!-- 
             ... 
         -->
