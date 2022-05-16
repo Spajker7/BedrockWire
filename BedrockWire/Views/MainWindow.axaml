@@ -71,9 +71,10 @@
 			</DataGrid>
 			<GridSplitter Grid.Column="1" MinWidth="1" Width="1" Background="Gray" ResizeDirection="Columns"/>
 			<DockPanel Grid.Column="2">
-				<StackPanel Background="LightGray" DockPanel.Dock="Top" Grid.Row="0" Spacing="10">
-					<Button Margin="5" Command="{Binding OnDecodePacketCommand}" HorizontalContentAlignment="Center" IsEnabled="{Binding SelectedPacket, Mode=OneWay, Converter={x:Static ObjectConverters.IsNotNull}}" VerticalContentAlignment="Center" FontSize="10" Height="24" HorizontalAlignment="Right">Decode Packet</Button>
-				</StackPanel>
+				<DockPanel Background="{Binding SelectedPacket.Error, Mode=OneWay, Converter={StaticResource backgroundColorConverter}}" DockPanel.Dock="Top" Grid.Row="0">
+					<TextBlock DockPanel.Dock="Left" FontSize="14" Padding="2" Margin="5" Height="24" Text="{Binding SelectedPacket.Error}"></TextBlock>
+					<Button DockPanel.Dock="Right" Margin="5" Command="{Binding OnDecodePacketCommand}" HorizontalContentAlignment="Center" IsEnabled="{Binding SelectedPacket, Mode=OneWay, Converter={x:Static ObjectConverters.IsNotNull}}" VerticalContentAlignment="Center" FontSize="10" Height="24" HorizontalAlignment="Right">Decode Packet</Button>
+				</DockPanel>
 				<Grid VerticalAlignment="Stretch" RowDefinitions="*, 4, *" DataContext="{Binding SelectedPacket}">
 					<TreeView VerticalAlignment="Stretch" Grid.Row="0" Items="{Binding, Mode=OneWay, Converter={StaticResource dictionaryTreeViewConverter}}"></TreeView>
 					<GridSplitter Grid.Row="1" MinHeight="1" Height="1" Background="Gray" ResizeDirection="Rows"/>

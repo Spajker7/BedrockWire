@@ -184,6 +184,28 @@ namespace BedrockWire.Core
             return nbtFile.RootTag.ToString();
         }
 
+        private static object ReadNBTSequence(BinaryReader reader)
+        {
+            Dictionary<object, object> dict = new Dictionary<object, object>();
+
+            // shitty hack for one packet...
+            while(reader.BaseStream.Position < reader.BaseStream.Length - 1)
+            {
+                NbtFile nbtFile = new NbtFile();
+                nbtFile.BigEndian = false;
+                nbtFile.UseVarInt = true;
+                nbtFile.AllowAlternativeRootTag = true;
+
+                nbtFile.LoadFromStream(reader.BaseStream, NbtCompression.None);
+                dict.Add(nbtFile.RootTag.Name, nbtFile.RootTag.ToString());
+            }
+
+            // seems to be a null byte at the end
+            reader.ReadByte();
+
+            return dict;
+        }
+
         public static readonly Dictionary<string, Func<BinaryReader, object>> Decoders = new Dictionary<string, Func<BinaryReader, object>>()
         {
             {"shortBE", ReadShortBe},
@@ -209,6 +231,7 @@ namespace BedrockWire.Core
             {"uuid", ReadUUID },
             {"nbt", ReadNBT },
             {"byteArray", ReadByteArray },
+            {"nbtSequence", ReadNBTSequence }, // for LevelEventGeneric
             {"doubleVarIntProduct", ReadDoubleVarIntProduct }, // TODO: Get rid of this
             {"fixed256", ReadFixed256 },// TODO: Get rid of this
         };

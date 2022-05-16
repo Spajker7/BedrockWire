@@ -174,6 +174,7 @@ namespace BedrockWire.ViewModels
                         }
 
                         // All read and decoded, filter
+                        stream.Close();
 
                         Dispatcher.UIThread.Post(() =>
                         {
@@ -251,7 +252,7 @@ namespace BedrockWire.ViewModels
             {
                 SaveFileDialog dlg = new SaveFileDialog();
                 dlg.Title = "Save Document As...";
-                dlg.InitialFileName = "auth.json";
+                dlg.InitialFileName = "dump.bw";
                 dlg.Filters.Add(new FileDialogFilter() { Name = "BedrockWire Files", Extensions = { "bw" } });
                 dlg.DefaultExtension = "bw";
 

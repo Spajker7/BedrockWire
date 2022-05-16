@@ -351,6 +351,10 @@
 					</case>
 				</switch>
 			</list>
+			<field name="Filters" type="unsignedVarInt" />
+			<list>
+				<field name="Filter" type="string"></field>
+			</list>
 		</type>
 	</types>
 	<packets>
@@ -487,7 +491,102 @@
 		</packet>
 
 		<packet id="0x0b" name="MCPE_START_GAME">
-
+			<field name="EntityUniqueId" type="varLong" />
+			<field name="EntityRuntimeId" type="unsignedVarLong" />
+			<field name="Gamemode" type="varInt" />
+			<field name="Position" type="posFloat" />
+			<field name="Pitch" type="float" />
+			<field name="Yaw" type="float" />
+			<field name="Seed" type="long" />
+			<field name="SpawnBiomeType" type="short" />
+			<field name="SpawnBiomeName" type="string" />
+			<field name="SpawnDimension" type="varInt" />
+			<field name="Generator" type="varInt" />
+			<field name="WorldGamemode" type="varInt" />
+			<field name="Difficulty" type="varInt" />
+			<field name="SpawnPosition" type="posVarInt" />
+			<field name="AreAchievementsDisabled" type="bool" />
+			<field name="Time" type="varInt" />
+			<field name="EduEditionOffer" type="varInt" />
+			<field name="AreEduFeaturesEnabled" type="bool" />
+			<field name="EduProductUUID" type="string" />
+			<field name="RainLevel" type="float" />
+			<field name="LightingLevel" type="float" />
+			<field name="HasConfirmedPlatformLockedContent" type="bool" />
+			<field name="IsMultiplayerGame" type="bool" />
+			<field name="IsBroadcastingLan" type="bool" />
+			<field name="XboxBroadcastMode" type="varInt" />
+			<field name="PlatformBroadcastMode" type="varInt" />
+			<field name="AreCommandsEnabled" type="bool" />
+			<field name="AreTexturePacksRequired" type="bool" />
+			<field name="GameRules" type="unsignedVarInt" />
+			<list>
+				<field name="Name" type="string" />
+				<field name="IsPlayerModifiable" type="bool" />
+				<field name="Type" type="unsignedVarInt" />
+				<switch>
+					<case value="1">
+						<field name="Value" type="bool" />
+					</case>
+					<case value="2">
+						<field name="Value" type="unsignedVarInt" />
+					</case>
+					<case value="3">
+						<field name="Value" type="float" />
+					</case>
+				</switch>
+			</list>
+			<field name="Experiments" type="int" />
+			<list>
+				<field name="Name" type="string" />
+				<field name="Enabled" type="bool" />
+			</list>
+			<field name="HasPreviouslyUsedExperiments" type="bool" />
+			<field name="IsBonusChestEnabled" type="bool" />
+			<field name="HasStartWithMapEnabled" type="bool" />
+			<field name="DefaultPlayerPermission" type="varInt" />
+			<field name="ServerChunkTickRadius" type="int" />
+			<field name="HasLockedBehvaiorPack" type="bool" />
+			<field name="HasLockedResourcePack" type="bool" />
+			<field name="IsFromLockedWorldTemplate" type="bool" />
+			<field name="UseMsaGamerTagsOnly" type="bool" />
+			<field name="IsFromWorldTemplate" type="bool" />
+			<field name="IsWorldTemplateOptionLocked" type="bool" />
+			<field name="OnlySpawnV1Villagers" type="bool" />
+			<field name="VanillaVersion" type="string" />
+			<field name="LimitedWorldWidth" type="int" />
+			<field name="LimitedWorldLength" type="int" />
+			<field name="IsNewNether" type="bool" />
+			<field name="EducationUriName" type="string" />
+			<field name="EducationUriLink" type="string" />
+			<field name="HasExperimentalGamePlayOverride" type="bool" />
+			<conditional condition="true">
+				<field name="ExperimentalGamePlayOverride" type="bool" />
+			</conditional>
+			<field name="LevelId" type="string" />
+			<field name="WorldName" type="string" />
+			<field name="PremiumWorldTemplateId" type="string" />
+			<field name="IsTrial" type="bool" />
+			<field name="MovementType" type="varInt" />
+			<field name="RewindHistorySize" type="varInt" />
+			<field name="ServerAuthoritativeBlockBreaking" type="bool" />
+			<field name="CurrentTick" type="long" />
+			<field name="EnchantmentSeed" type="varInt" />
+			<field name="BlockPalette" type="unsignedVarInt" />
+			<list>
+				<field name="Name" type="string" />
+				<field name="State" type="nbt" />
+			</list>
+			<field name="Items" type="unsignedVarInt" />
+			<list>
+				<field name="StringId" type="string" />
+				<field name="NumericId" type="short" />
+				<field name="IsComponentBased" type="bool" />
+			</list>
+			<field name="MultiplayerCorrelationId" type="string" />
+			<field name="EnableNewInventorySystem" type="bool" />
+			<field name="ServerSoftwareVersion" type="string" />
+			<field name="BlockPaletteChecksum" type="long" />
 		</packet>
 
 		<packet id="0x0c" name="MCPE_ADD_PLAYER">
@@ -871,7 +970,7 @@
 		<packet id="0x35" name="MCPE_CRAFTING_EVENT">
 			<field name="Window ID" type="byte" />
 			<field name="Recipe Type" type="varInt" />
-			<field name="Recipe ID" type="UUID" />
+			<field name="Recipe ID" type="uuid" />
 			<field name="Input" type="itemStacks" />
 			<field name="Result" type="itemStacks" />
 		</packet>
@@ -967,11 +1066,11 @@
 			<field name="Event Type" type="unsignedShort" />
 		</packet>
 
-		<packet id="0x41" name="MCPE_TELEMETRY_EVENT">
+		<packet id="0x41" name="MCPE_EVENT">
 			<field name="Runtime Entity ID" type="unsignedVarLong" />
 			<field name="Event data" type="varInt" />
 			<field name="Event type" type="byte" />
-			<field name="Aux Data" type="byte[]" size="0, true" note="Ignored" />
+			<!-- TODO: -->
 		</packet>
 
 		<packet id="0x42" name="MCPE_SPAWN_EXPERIENCE_ORB">
@@ -1396,7 +1495,7 @@
 
 		<packet id="0x7c" name="MCPE_LEVEL_EVENT_GENERIC">
 			<field name="EventId" type="varInt" />
-			<field name="EventData" type="nbt" />
+			<field name="EventData" type="nbtSequence" />
 		</packet>
 
 		<packet id="0x7d" name="MCPE_LECTERN_UPDATE">
@@ -1482,6 +1581,7 @@
 							</list>
 						</list>
 					</conditional>
+					<field name="Actions" type="transactionRecords" />
 					<field name="Action Type" type="unsignedVarInt" />
 					<field name="Position" type="posVarInt" />
 					<field name="Face" type="varInt" />
@@ -1537,11 +1637,31 @@
 		</packet>
 
 		<packet id="0x93" name="MCPE_ITEM_STACK_REQUEST">
-			<field name="Requests" type="itemStackRequests" />
+			<field name="Requests" type="unsignedVarInt" />
+			<list>
+				<field name="Request" type="itemStackRequest" />
+			</list>
 		</packet>
 
 		<packet id="0x94" name="MCPE_ITEM_STACK_RESPONSE">
-			<field name="Responses" type="itemStackResponses" />
+			<field name="Responses" type="unsignedVarInt" />
+			<list>
+				<field name="Result" type="byte" />
+				<field name="RequestId" type="varInt" />
+				<field name="ContainerInfos" type="unsignedVarInt" />
+				<list>
+					<field name="ContainerId" type="byte" />
+					<field name="Slots" type="unsignedVarInt" />
+					<list>
+						<field name="Slot" type="byte" />
+						<field name="HotbarSlot" type="byte" />
+						<field name="Count" type="byte" />
+						<field name="ItemStackId" type="varInt" />
+						<field name="CustomName" type="string" />
+						<field name="DurabilityCorrection" type="varInt" />
+					</list>
+				</list>
+			</list>
 		</packet>
 
 		<packet id="0x97" name="MCPE_UPDATE_PLAYER_GAME_TYPE"></packet>
@@ -1559,6 +1679,12 @@
 			<field name="Severity" type="varInt" />
 			<field name="Packet Id" type="varInt" />
 			<field name="Reason" type="string" />
+		</packet>
+
+		<packet id="0x9d" name="MCPE_MOTION_PREDICTION_HINTS">
+			<field name="EntityId" type="unsignedVarLong" />
+			<field name="Motion" type="posFloat" />
+			<field name="OnGround" type="bool" />
 		</packet>
 
 		<packet id="0xa0" name="MCPE_PLAYER_FOG_PACKET">

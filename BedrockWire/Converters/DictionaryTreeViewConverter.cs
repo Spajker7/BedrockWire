@@ -60,13 +60,8 @@ namespace BedrockWire.Converters
 
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if(value is Packet p)
+            if(value is Packet p && p.Decoded != null)
             {
-                if(p.Error != null)
-                {
-                    return new List<TreeViewItem>() { new TreeViewItem() { Header = p.Error, Background = new SolidColorBrush(Color.Parse("#E6534E")) } };
-                }
-
                 return new List<TreeViewItem>() { ObjectToTreeViewItem("Root", p.Decoded) };
             }
             return null;

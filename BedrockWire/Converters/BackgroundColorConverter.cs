@@ -14,7 +14,7 @@ namespace BedrockWire.Converters
                 return new SolidColorBrush(Color.Parse("#E6534E"));
             }
 
-            return new SolidColorBrush(Color.Parse("#FFF"));
+            return null;
         }
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
