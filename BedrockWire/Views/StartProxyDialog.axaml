@@ -9,7 +9,7 @@
 		Width="400"
 		Height="400"
 		WindowState="Normal"
-		HasSystemDecorations="False"
+		SystemDecorations="BorderOnly"
 		WindowStartupLocation="CenterOwner">
 	<Design.DataContext>
 		<vm:StartProxyDialogViewModel/>
@@ -38,9 +38,9 @@
 			</StackPanel>
 			<StackPanel IsVisible="{Binding ShowProxySettings}" VerticalAlignment="Center">
 				<TextBlock Margin="10" HorizontalAlignment="Center">Remote server address: </TextBlock>
-				<TextBox Margin="10" Width="150" HorizontalAlignment="Center" Text="{Binding RemoteServerAddress}">127.0.0.1:19132</TextBox>
+				<TextBox Margin="10" Width="150" HorizontalAlignment="Center" Text="{Binding RemoteServerAddress}"></TextBox>
 				<TextBlock Margin="10" HorizontalAlignment="Center">Proxy port: </TextBlock>
-				<TextBox Margin="10" Width="150" HorizontalAlignment="Center" Text="{Binding ProxyPort}">19135</TextBox>
+				<TextBox Margin="10" Width="150" HorizontalAlignment="Center" Text="{Binding ProxyPort}"></TextBox>
 				<Button  HorizontalAlignment="Center" Command="{Binding OnStartProxyCommand}" CommandParameter="{Binding $parent[Window]}">Start Proxy</Button>
 			</StackPanel>
 		</StackPanel>

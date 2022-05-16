@@ -11,10 +11,10 @@
 		xmlns:converters="clr-namespace:BedrockWire.Converters;assembly=BedrockWire">
 
 	<Window.Resources>
-		<converters:HexConverter x:Key="hexConverter"/>
-		<converters:BackgroundColorConverter x:Key="backgroundColorConverter"/>
-		<converters:MsTimeConverter x:Key="msTimeConverter"/>
-		<converters:DictionaryTreeViewConverter x:Key="dictionaryTreeViewConverter"/>
+		<converters:HexConverter x:Key="HexConverter"/>
+		<converters:BackgroundColorConverter x:Key="BackgroundColorConverter"/>
+		<converters:MsTimeConverter x:Key="MsTimeConverter"/>
+		<converters:DictionaryTreeViewConverter x:Key="DictionaryTreeViewConverter"/>
 	</Window.Resources>
 
 	<Design.DataContext>
@@ -52,7 +52,7 @@
 			<DataGrid x:Name="datagrid" CanUserSortColumns="False" FontSize="10" Grid.Column="0" Items="{Binding FilteredPacketListView}" SelectedItem="{Binding SelectedPacket}" AutoGenerateColumns="False">
 				<DataGrid.Styles>
 					<Style Selector="DataGridRow">
-						<Setter Property="Background" Value="{Binding Error, Mode=OneWay, Converter={StaticResource backgroundColorConverter}}"/>
+						<Setter Property="Background" Value="{Binding Error, Mode=OneWay, Converter={StaticResource BackgroundColorConverter}}"/>
 					</Style>
 					<Style Selector="DataGridCell">
 						<Setter Property="MinHeight" Value="24" />
@@ -63,7 +63,7 @@
 				<DataGrid.Columns>
 					<DataGridTextColumn Header="#"  Binding="{Binding Index}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Direction"  Binding="{Binding Direction}" IsReadOnly="True"/>
-					<DataGridTextColumn Header="Time" Binding="{Binding Time, Mode=OneTime, Converter={StaticResource msTimeConverter}}" IsReadOnly="True"/>
+					<DataGridTextColumn Header="Time" Binding="{Binding Time, Mode=OneTime, Converter={StaticResource MsTimeConverter}}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Packet Name" Binding="{Binding Name}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Length" Binding="{Binding Length}" IsReadOnly="True"/>
@@ -71,14 +71,14 @@
 			</DataGrid>
 			<GridSplitter Grid.Column="1" MinWidth="1" Width="1" Background="Gray" ResizeDirection="Columns"/>
 			<DockPanel Grid.Column="2">
-				<DockPanel Background="{Binding SelectedPacket.Error, Mode=OneWay, Converter={StaticResource backgroundColorConverter}}" DockPanel.Dock="Top" Grid.Row="0">
+				<DockPanel Background="{Binding SelectedPacket.Error, Mode=OneWay, Converter={StaticResource BackgroundColorConverter}}" DockPanel.Dock="Top" Grid.Row="0">
 					<TextBlock DockPanel.Dock="Left" FontSize="14" Padding="2" Margin="5" Height="24" Text="{Binding SelectedPacket.Error}"></TextBlock>
 					<Button DockPanel.Dock="Right" Margin="5" Command="{Binding OnDecodePacketCommand}" HorizontalContentAlignment="Center" IsEnabled="{Binding SelectedPacket, Mode=OneWay, Converter={x:Static ObjectConverters.IsNotNull}}" VerticalContentAlignment="Center" FontSize="10" Height="24" HorizontalAlignment="Right">Decode Packet</Button>
 				</DockPanel>
 				<Grid VerticalAlignment="Stretch" RowDefinitions="*, 4, *" DataContext="{Binding SelectedPacket}">
-					<TreeView VerticalAlignment="Stretch" Grid.Row="0" Items="{Binding, Mode=OneWay, Converter={StaticResource dictionaryTreeViewConverter}}"></TreeView>
+					<TreeView VerticalAlignment="Stretch" Grid.Row="0" Items="{Binding ., Mode=OneWay, Converter={StaticResource DictionaryTreeViewConverter}}"></TreeView>
 					<GridSplitter Grid.Row="1" MinHeight="1" Height="1" Background="Gray" ResizeDirection="Rows"/>
-					<TextBox BorderThickness="0" FontFamily="Inconsolata,Consolas,Monospace,Courier" Grid.Row="2" Text="{Binding Payload, Mode=OneWay, Converter={StaticResource hexConverter}}" IsReadOnly="True"></TextBox>
+					<TextBox BorderThickness="0" FontFamily="Inconsolata,Consolas,Monospace,Courier" Grid.Row="2" Text="{Binding Payload, Mode=OneWay, Converter={StaticResource HexConverter}}" IsReadOnly="True"></TextBox>
 				</Grid>
 			</DockPanel>
 		</Grid>

@@ -8,7 +8,7 @@
 		Width="200"
 		Height="50"
 		WindowState="Normal"
-		HasSystemDecorations="False"
+		SystemDecorations="BorderOnly"
 		WindowStartupLocation="CenterOwner">
 	<Border BorderBrush="Gray" BorderThickness="1">
 		<StackPanel>
