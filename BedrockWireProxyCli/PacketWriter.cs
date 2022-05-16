@@ -1,5 +1,6 @@
 ﻿using BedrockWireFormat;
 using BedrockWireProxy;
+using BedrockWireProxyInterface;
 using System.Collections.Concurrent;
 
 namespace BedrockWireProxyCli
@@ -46,9 +47,9 @@ namespace BedrockWireProxyCli
             }
         }
 
-        public void WritePacket(PacketDirection direction, RawMinecraftPacket packet, ulong time)
+        public void WritePacket(PacketDirection direction, byte id, ReadOnlyMemory<byte> payload, ulong time)
 		{
-			Queue.Add(new Packet() { Id = packet.Id, Payload = packet.Payload, Length = (uint) packet.Payload.Length, Time = time , Direction = direction });
+			Queue.Add(new Packet() { Id = id, Payload = payload, Length = (uint) payload.Length, Time = time , Direction = direction });
 		}
-	}
+    }
 }

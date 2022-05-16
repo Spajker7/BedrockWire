@@ -1,4 +1,5 @@
-﻿using MiNET;
+﻿using BedrockWireProxyInterface;
+using MiNET;
 using MiNET.Net.RakNet;
 using System.Net;
 

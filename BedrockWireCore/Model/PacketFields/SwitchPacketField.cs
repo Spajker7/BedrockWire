@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BedrockWire.Models.PacketFields
+namespace BedrockWire.Core.Model.PacketFields
 {
-    public class FlagsPacketField : PacketField
+    public class SwitchPacketField : PacketField
     {
         public string? ReferencesId { get; set; }
         public List<CasePacketField> SubFields { get; set; }

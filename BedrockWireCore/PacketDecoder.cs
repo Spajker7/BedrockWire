@@ -1,16 +1,51 @@
-﻿using BedrockWire.Models.PacketFields;
+﻿using BedrockWire.Core.Model;
+using BedrockWire.Core.Model.PacketFields;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BedrockWire.Models
+namespace BedrockWire.Core
 {
     public static class PacketDecoder
     {
-        public static Dictionary<object, object> Decode(BinaryReader reader, List<PacketField> packetFields)
+        public static void Decode(ProtocolDefinition protocolDefinition, Packet decodedPacket)
+        {
+            decodedPacket.Name = "UNKNOWN_PACKET";
+            decodedPacket.Error = null;
+            decodedPacket.Decoded = null;
+
+            if (protocolDefinition != null && protocolDefinition.PacketDefinitions.ContainsKey(decodedPacket.Id))
+            {
+                decodedPacket.Name = protocolDefinition.PacketDefinitions[decodedPacket.Id].Name;
+
+                try
+                {
+                    using (MemoryStream stream = new MemoryStream(decodedPacket.Payload))
+                    {
+                        using (BinaryReader reader2 = new BinaryReader(stream))
+                        {
+                            decodedPacket.Decoded = PacketDecoder.Decode(protocolDefinition, reader2, protocolDefinition.PacketDefinitions[decodedPacket.Id].Fields);
+                            if (stream.Position != stream.Length)
+                            {
+                                decodedPacket.Error = (stream.Length - stream.Position) + " bytes left unread";
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    decodedPacket.Error = ex.Message;
+                }
+            }
+            else
+            {
+                decodedPacket.Error = "Unknown packet id: " + decodedPacket.Id;
+            }
+        }
+
+        public static Dictionary<object, object> Decode(ProtocolDefinition protocolDefinition, BinaryReader reader, List<PacketField> packetFields)
         {
             Dictionary<object, object> packet = new Dictionary<object, object>();
             Dictionary<string, Tuple<string, object>> referenceValues = new Dictionary<string, Tuple<string, object>>();
@@ -24,25 +59,24 @@ namespace BedrockWire.Models
 
                 if (field is ConditionalPacketField conditionalField)
                 {
-                    string condition = conditionalField.Condition;
-                    bool isNegative = condition[0] == '!';
-                    if (isNegative)
-                    {
-                        condition = condition.Substring(1);
-                    }
-
                     object referencedValue = conditionalField.ReferencesId != null ? referenceValues[conditionalField.ReferencesId].Item2 : previousValue;
                     string referencedName = conditionalField.ReferencesId != null ? referenceValues[conditionalField.ReferencesId].Item1 : previousName;
+                    
+                    var (evaluationResult, error) = conditionalField.Condition.TryEvaluate(new Dictionary<string, object>() { { "value", referencedValue } });
 
-                    if ((!isNegative && condition.Equals(referencedValue.ToString())) || (isNegative && !condition.Equals(referencedValue.ToString())))
+                    if (error == null && evaluationResult is bool boolResult && boolResult)
                     {
-                        fieldValue = Decode(reader, conditionalField.SubFields);
+                        fieldValue = Decode(protocolDefinition, reader, conditionalField.SubFields);
                         if (fieldName == null)
                         {
                             // replace referenced field
                             packet.Remove(referencedName);
                             fieldName = referencedName + ": " + referencedValue.ToString();
                         }
+                    } 
+                    else
+                    {
+                        continue;
                     }
                 }
                 else if (field is SwitchPacketField switchField)
@@ -54,7 +88,7 @@ namespace BedrockWire.Models
 
                     if (elm != null)
                     {
-                        fieldValue = Decode(reader, elm.SubFields);
+                        fieldValue = Decode(protocolDefinition, reader, elm.SubFields);
                         if (fieldName == null)
                         {
                             // replace referenced field
@@ -99,7 +133,7 @@ namespace BedrockWire.Models
 
                         if((value & bitflag) != 0)
                         {
-                            list.Add(i, Decode(reader, x.SubFields));
+                            list.Add(i, Decode(protocolDefinition, reader, x.SubFields));
                             i++;
                         }
                     }
@@ -127,7 +161,7 @@ namespace BedrockWire.Models
 
                     for (int i = 0; i < value; i++)
                     {
-                        list.Add(i, Decode(reader, listField.SubFields));
+                        list.Add(i, Decode(protocolDefinition, reader, listField.SubFields));
                     }
 
                     fieldValue = list;
@@ -146,9 +180,9 @@ namespace BedrockWire.Models
                         fieldValue = value;
 
                     }
-                    else if (FieldDecoders.CustomDecoders.ContainsKey(valueField.Type))
+                    else if (protocolDefinition.CustomTypes.ContainsKey(valueField.Type))
                     {
-                        object value = Decode(reader, FieldDecoders.CustomDecoders[valueField.Type]);
+                        object value = Decode(protocolDefinition, reader, protocolDefinition.CustomTypes[valueField.Type]);
                         fieldValue = value;
                     }
                     else
@@ -173,7 +207,6 @@ namespace BedrockWire.Models
                     }
                 }
                 else
-
                 {
                     packet[fieldName] = fieldValue;
                 }

@@ -1,30 +1,13 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Threading;
 using BedrockWire.Models;
-using BedrockWire.Models.PacketFields;
-using BedrockWire.Utils;
-using BedrockWire.Views;
 using BedrockWireAuthDump;
-using BedrockWireAuthDump.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Crypto;
 using ReactiveUI;
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace BedrockWire.ViewModels
 {

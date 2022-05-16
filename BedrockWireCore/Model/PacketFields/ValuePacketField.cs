@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BedrockWire.Models.PacketFields
+namespace BedrockWire.Core.Model.PacketFields
 {
     public class ValuePacketField : PacketField
     {

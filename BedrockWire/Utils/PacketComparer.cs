@@ -1,4 +1,5 @@
-﻿using BedrockWire.Models;
+﻿using BedrockWire.Core.Model;
+using BedrockWire.Models;
 using System;
 using System.Collections;
 
@@ -10,7 +11,7 @@ namespace BedrockWire.Utils
         {
             if(x is Packet xp && y is Packet yp)
             {
-                return xp.OrderId.CompareTo(yp.OrderId);
+                return xp.Index.CompareTo(yp.Index);
             }
             throw new NotImplementedException();
         }

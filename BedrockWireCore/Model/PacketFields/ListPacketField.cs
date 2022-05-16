@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BedrockWire.Models.PacketFields
+namespace BedrockWire.Core.Model.PacketFields
 {
-    public class ConditionalPacketField : PacketField
+    public class ListPacketField : PacketField
     {
-        public string Condition { get; set; }
         public string? ReferencesId { get; set; }
         public List<PacketField> SubFields { get; set; }
     }

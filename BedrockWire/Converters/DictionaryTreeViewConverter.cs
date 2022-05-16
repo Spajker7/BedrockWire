@@ -3,15 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Data.Converters;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using BedrockWire.Models;
+using BedrockWire.Core.Model;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BedrockWire
+namespace BedrockWire.Converters
 {
     public class DictionaryTreeViewConverter : IValueConverter
     {

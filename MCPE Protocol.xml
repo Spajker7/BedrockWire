@@ -687,8 +687,16 @@
 		</packet>
 
 		<packet id="0x21" name="MCPE_INTERACT">
-			<field name="Action ID" type="byte" />
-			<field name="Target Runtime Entity ID" type="unsignedVarLong" />
+			<field name="ActionID" type="byte" refId="action" />
+			<field name="TargetRuntimeEntityID" type="unsignedVarLong" />
+			<switch ref="action">
+				<case value="3">
+					<field name="Position" type="posFloat" />
+				</case>
+				<case value="4">
+					<field name="Position" type="posFloat" />
+				</case>
+			</switch>
 		</packet>
 
 		<packet id="0x22" name="MCPE_BLOCK_PICK_REQUEST">
@@ -730,10 +738,11 @@
 		</packet>
 
 		<packet id="0x29" name="MCPE_SET_ENTITY_LINK">
-			<field name="Ridden ID" type="varLong" />
-			<field name="Rider ID" type="varLong" />
-			<field name="Link Type" type="byte" />
-			<field name="Unknown" type="byte" />
+			<field name="RiddenID" type="varLong" />
+			<field name="RiderID" type="varLong" />
+			<field name="LinkType" type="byte" />
+			<field name="Immediate" type="bool" />
+			<field name="CausedByRider" type="bool" />
 		</packet>
 
 		<packet id="0x2a" name="MCPE_SET_HEALTH">
@@ -1030,8 +1039,79 @@
 		</packet>
 
 		<packet id="0x4c" name="MCPE_AVAILABLE_COMMANDS">
-			<!--<field name="CommandData" type="CommandData"  />-->
-			<!--<field name="Unknown" type="string"  />-->
+			<field name="EnumValues" type="unsignedVarInt" refId="enums" />
+			<list>
+				<field name="Enum" type="string" />
+			</list>
+			<field name="Postfixes" type="unsignedVarInt" />
+			<list>
+				<field name="Postfix" type="string" />
+			</list>
+			<conditional name="CommandEnums" condition="value &lt; 256" ref="enums">
+				<field name="CommandEnums" type="unsignedVarInt" />
+				<list>
+					<field name="EnumName" type="string" />
+					<field name="EnumValues" type="unsignedVarInt" />
+					<list>
+						<field name="EnumValue" type="byte" />
+					</list>
+				</list>
+			</conditional>
+			<conditional name="CommandEnums" condition="value >= 256 &amp;&amp; value &lt; 65536" ref="enums">
+				<field name="CommandEnums" type="unsignedVarInt" />
+				<list>
+					<field name="EnumName" type="string" />
+					<field name="EnumValues" type="unsignedVarInt" />
+					<list>
+						<field name="EnumValue" type="short" />
+					</list>
+				</list>
+			</conditional>
+			<conditional name="CommandEnums" condition="value >= 65536" ref="enums">
+				<field name="CommandEnums" type="unsignedVarInt" />
+				<list>
+					<field name="EnumName" type="string" />
+					<field name="EnumValues" type="unsignedVarInt" />
+					<list>
+						<field name="EnumValue" type="int" />
+					</list>
+				</list>
+			</conditional>
+			<field name="CommandData" type="unsignedVarInt" />
+			<list>
+				<field name="Name" type="string" />
+				<field name="Description" type="string" />
+				<field name="Flags" type="short" />
+				<field name="Permission" type="byte" />
+				<field name="Aliases" type="int" />
+				<field name="Overloads" type="unsignedVarInt" />
+				<list>
+					<field name="Parameters" type="unsignedVarInt" />
+					<list>
+						<field name="Name" type="string" />
+						<field name="Type" type="int" />
+						<field name="IsOptional" type="bool" />
+						<field name="Flags" type="byte" />
+					</list>
+				</list>
+			</list>
+			<field name="SoftEnums" type="unsignedVarInt" />
+			<list>
+				<field name="Name" type="string" />
+				<field name="Values" type="unsignedVarInt" />
+				<list>
+					<field name="Name" type="string" />
+				</list>
+			</list>
+			<field name="EnumConstraints" type="unsignedVarInt" />
+			<list>
+				<field name="ValueIndex" type="int" />
+				<field name="EnumIndex" type="int" />
+				<field name="ConstraintIds" type="unsignedVarInt" />
+				<list>
+					<field name="ConstraintId" type="byte" />
+				</list>
+			</list>
 		</packet>
 
 		<packet id="0x4d" name="MCPE_COMMAND_REQUEST">
@@ -1456,15 +1536,23 @@
 			<field name="Enchant options" type="EnchantOptions" />
 		</packet>
 
-		<packet id="0x93" name="MCPE_item_STACK_REQUEST">
+		<packet id="0x93" name="MCPE_ITEM_STACK_REQUEST">
 			<field name="Requests" type="itemStackRequests" />
 		</packet>
 
-		<packet id="0x94" name="MCPE_item_STACK_RESPONSE">
+		<packet id="0x94" name="MCPE_ITEM_STACK_RESPONSE">
 			<field name="Responses" type="itemStackResponses" />
 		</packet>
 
 		<packet id="0x97" name="MCPE_UPDATE_PLAYER_GAME_TYPE"></packet>
+
+		<packet id="0x98" name="EMOTE_LIST_PACKET">
+			<field name="EntityRuntimeId" type="unsignedVarLong" />
+			<field name="EmoteIds" type="unsignedVarInt" />
+			<list>
+				<field name="UUID" type="uuid" />
+			</list>
+		</packet>
 
 		<packet id="0x9c" name="MCPE_PACKET_VIOLATION_WARNING">
 			<field name="Violation Type" type="varInt" />
@@ -1473,11 +1561,18 @@
 			<field name="Reason" type="string" />
 		</packet>
 
+		<packet id="0xa0" name="MCPE_PLAYER_FOG_PACKET">
+			<field name="Layers" type="unsignedVarInt" />
+			<list>
+				<field name="Layer" type="string" />
+			</list>
+		</packet>
+		
 		<packet id="0xa2" name="MCPE_ITEM_COMPONENT">
 			<field name="Entries" type="unsignedVarInt" />
 			<list>
 				<field name="Name" type="string" />
-				<field name="nbt" type="nbt"/>
+				<field name="nbt" type="nbt" />
 			</list>
 		</packet>
 

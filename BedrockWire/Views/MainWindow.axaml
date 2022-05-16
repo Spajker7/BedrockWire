@@ -8,13 +8,13 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="BedrockWire"
 		WindowState="Maximized"
-		xmlns:local="clr-namespace:BedrockWire;assembly=BedrockWire">
+		xmlns:converters="clr-namespace:BedrockWire.Converters;assembly=BedrockWire">
 
 	<Window.Resources>
-		<local:HexConverter x:Key="hexConverter"/>
-		<local:BackgroundColorConverter x:Key="backgroundColorConverter"/>
-		<local:MsTimeConverter x:Key="msTimeConverter"/>
-		<local:DictionaryTreeViewConverter x:Key="dictionaryTreeViewConverter"/>
+		<converters:HexConverter x:Key="hexConverter"/>
+		<converters:BackgroundColorConverter x:Key="backgroundColorConverter"/>
+		<converters:MsTimeConverter x:Key="msTimeConverter"/>
+		<converters:DictionaryTreeViewConverter x:Key="dictionaryTreeViewConverter"/>
 	</Window.Resources>
 
 	<Design.DataContext>
@@ -29,6 +29,7 @@
 					<Button Command="{Binding OnStartProxyCommand}" CommandParameter="{Binding $parent[Window]}" IsVisible="{Binding !IsLive}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Start Proxy</Button>
 					<Button Command="{Binding OnStopProxyCommand}" CommandParameter="{Binding $parent[Window]}" IsVisible="{Binding IsLive}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Stop Proxy</Button>
 					<Button Command="{Binding OnClearCommand}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Clear</Button>
+					<Button Command="{Binding OnSaveCommand}" CommandParameter="{Binding $parent[Window]}" IsEnabled="{Binding !IsLive}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="10" Height="24">Save Packet Dump</Button>
 				</StackPanel>
 				<StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="10">
 					<Button Command="{Binding OnLoadProtocolCommand}" CommandParameter="{Binding $parent[Window]}" HorizontalContentAlignment="Center" IsEnabled="{Binding !IsLive}" VerticalContentAlignment="Center" FontSize="10" Height="24">Load Protocol Definition</Button>
@@ -60,32 +61,25 @@
 					</Style>
 				</DataGrid.Styles>
 				<DataGrid.Columns>
-					<DataGridTextColumn Header="#"  Binding="{Binding OrderId}" IsReadOnly="True"/>
+					<DataGridTextColumn Header="#"  Binding="{Binding Index}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Direction"  Binding="{Binding Direction}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Time" Binding="{Binding Time, Mode=OneTime, Converter={StaticResource msTimeConverter}}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Packet Name" Binding="{Binding Name}" IsReadOnly="True"/>
 					<DataGridTextColumn Header="Length" Binding="{Binding Length}" IsReadOnly="True"/>
-					<!--
-					<DataGridTextColumn Header="DT" Binding="{Binding DecodeTime}" IsReadOnly="True"/>
-					
-					<DataGridTemplateColumn Header="Actions" Width="*" >
-						<DataGridTemplateColumn.CellTemplate>
-							<DataTemplate >
-								<StackPanel Orientation="Horizontal">
-									<Button MinHeight="20" Padding="3 0 3 0" VerticalContentAlignment="Center" Height="20" FontSize="14" Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}, Path=DataContext.DecodeCommand}" CommandParameter="{Binding}">Decode</Button>
-								</StackPanel>
-							</DataTemplate>
-						</DataGridTemplateColumn.CellTemplate>
-					</DataGridTemplateColumn>		-->
 				</DataGrid.Columns>
 			</DataGrid>
 			<GridSplitter Grid.Column="1" MinWidth="1" Width="1" Background="Gray" ResizeDirection="Columns"/>
-			<Grid Grid.Column="2" RowDefinitions="*, 4, *" DataContext="{Binding SelectedPacket}">
-				<TreeView Grid.Row="0" Items="{Binding, Mode=OneWay, Converter={StaticResource dictionaryTreeViewConverter}}"></TreeView>
-				<GridSplitter Grid.Row="1" MinHeight="1" Height="1" Background="Gray" ResizeDirection="Rows"/>
-				<TextBox BorderThickness="0" FontFamily="Inconsolata,Consolas,Monospace,Courier" Grid.Row="2" Text="{Binding Payload, Mode=OneWay, Converter={StaticResource hexConverter}}" IsReadOnly="True"></TextBox>
-			</Grid>
+			<DockPanel Grid.Column="2">
+				<StackPanel Background="LightGray" DockPanel.Dock="Top" Grid.Row="0" Spacing="10">
+					<Button Margin="5" Command="{Binding OnDecodePacketCommand}" HorizontalContentAlignment="Center" IsEnabled="{Binding SelectedPacket, Mode=OneWay, Converter={x:Static ObjectConverters.IsNotNull}}" VerticalContentAlignment="Center" FontSize="10" Height="24" HorizontalAlignment="Right">Decode Packet</Button>
+				</StackPanel>
+				<Grid VerticalAlignment="Stretch" RowDefinitions="*, 4, *" DataContext="{Binding SelectedPacket}">
+					<TreeView VerticalAlignment="Stretch" Grid.Row="0" Items="{Binding, Mode=OneWay, Converter={StaticResource dictionaryTreeViewConverter}}"></TreeView>
+					<GridSplitter Grid.Row="1" MinHeight="1" Height="1" Background="Gray" ResizeDirection="Rows"/>
+					<TextBox BorderThickness="0" FontFamily="Inconsolata,Consolas,Monospace,Courier" Grid.Row="2" Text="{Binding Payload, Mode=OneWay, Converter={StaticResource hexConverter}}" IsReadOnly="True"></TextBox>
+				</Grid>
+			</DockPanel>
 		</Grid>
 	</DockPanel>
 </Window>

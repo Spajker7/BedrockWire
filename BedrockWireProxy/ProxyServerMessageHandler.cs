@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using BedrockWireProxyInterface;
 using Jose;
 using MiNET;
 using MiNET.Net;
@@ -241,7 +242,7 @@ namespace BedrockWireProxy
 				if (packet.Id == 0x01) // login packet, special case because of encryption
 				{
 					StartTime = time;
-					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Serverbound, packet, 0);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Serverbound, packet.Id, packet.Payload, 0);
 
 					MemoryStreamReader reader = new MemoryStreamReader(packet.Payload);
 					int protocol = BinaryPrimitives.ReverseEndianness(reader.ReadInt32());
@@ -450,7 +451,7 @@ namespace BedrockWireProxy
 				}
 				else
 				{
-					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Serverbound, packet, time - StartTime);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Serverbound, packet.Id, packet.Payload, time - StartTime);
 					_proxyClientMessageHandler.Session.SendPacket(packet);
 				}
 			}

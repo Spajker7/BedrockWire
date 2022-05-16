@@ -7,10 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BedrockWireProxy
+namespace BedrockWireProxyInterface
 {
 	public interface IPacketWriter
 	{
-		public void WritePacket(PacketDirection direction, RawMinecraftPacket packet, ulong time);
+		public void WritePacket(PacketDirection direction, byte id, ReadOnlyMemory<byte> payload, ulong time);
 	}
 }

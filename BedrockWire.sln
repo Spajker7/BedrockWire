@@ -17,6 +17,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BedrockWireProxy", "Bedrock
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MinetRaknet", "MinetRaknet\MinetRaknet.csproj", "{4963FF4F-EA1B-47A8-9E52-1732E336C479}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BedrockWireProxyInterface", "BedrockWireProxyInterface\BedrockWireProxyInterface.csproj", "{8F40E739-9032-466E-8159-BA360C4C3A7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BedrockWireCore", "BedrockWireCore\BedrockWireCore.csproj", "{24BC9644-5919-49BA-93E2-A5872B12B6B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +55,14 @@ Global
 		{4963FF4F-EA1B-47A8-9E52-1732E336C479}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4963FF4F-EA1B-47A8-9E52-1732E336C479}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4963FF4F-EA1B-47A8-9E52-1732E336C479}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F40E739-9032-466E-8159-BA360C4C3A7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F40E739-9032-466E-8159-BA360C4C3A7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F40E739-9032-466E-8159-BA360C4C3A7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F40E739-9032-466E-8159-BA360C4C3A7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24BC9644-5919-49BA-93E2-A5872B12B6B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24BC9644-5919-49BA-93E2-A5872B12B6B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24BC9644-5919-49BA-93E2-A5872B12B6B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24BC9644-5919-49BA-93E2-A5872B12B6B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

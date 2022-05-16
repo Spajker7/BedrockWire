@@ -28,7 +28,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace BedrockWire.Utils
+namespace BedrockWire.Core
 {
 	public static class VarInt
 	{

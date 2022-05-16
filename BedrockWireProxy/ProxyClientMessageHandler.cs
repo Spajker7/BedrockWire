@@ -1,13 +1,8 @@
-﻿using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Buffers.Binary;
 using System.IO.Compression;
-using System.Linq;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
+using BedrockWireProxyInterface;
 using Jose;
 using MiNET;
 using MiNET.Net;
@@ -16,12 +11,10 @@ using MiNET.Utils;
 using MiNET.Utils.Cryptography;
 using MiNET.Utils.IO;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Agreement;
 using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
@@ -30,7 +23,7 @@ using SicStream;
 
 namespace BedrockWireProxy
 {
-	class JWTMapper : IJsonMapper
+    class JWTMapper : IJsonMapper
 	{
 		private static DefaultContractResolver ContractResolver = new DefaultContractResolver
 		{
@@ -357,7 +350,7 @@ namespace BedrockWireProxy
 				var time = (ulong)DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 				if (packet.Id == 0x03)
 				{
-					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Clientbound, packet, time - StartTime);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Clientbound, packet.Id, packet.Payload, time - StartTime);
 					MemoryStreamReader reader = new MemoryStreamReader(packet.Payload);
 					int len = (int) VarInt.ReadUInt32(reader);
 					string token = Encoding.UTF8.GetString(reader.Read((ulong) len).ToArray());
@@ -404,7 +397,7 @@ namespace BedrockWireProxy
 				}
 				else
 				{
-					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Clientbound, packet, time - StartTime);
+					_packetWriter.WritePacket(BedrockWireFormat.PacketDirection.Clientbound, packet.Id, packet.Payload, time - StartTime);
 					_proxyServerMessageHandler.Session.SendPacket(packet);
 				}
 			}

@@ -1,6 +1,4 @@
-﻿using BedrockWire.Models.PacketFields;
-using BedrockWire.Utils;
-using fNbt;
+﻿using fNbt;
 using Jose;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,9 +8,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace BedrockWire.Models
+namespace BedrockWire.Core
 {
     public class FieldDecoders
     {
@@ -215,7 +212,5 @@ namespace BedrockWire.Models
             {"doubleVarIntProduct", ReadDoubleVarIntProduct }, // TODO: Get rid of this
             {"fixed256", ReadFixed256 },// TODO: Get rid of this
         };
-
-        public static Dictionary<string, List<PacketField>> CustomDecoders = new Dictionary<string, List<PacketField>>();
     }
 }
