@@ -669,9 +669,9 @@
 			<field name="Runtime Entity ID" type="unsignedVarLong" />
 			<field name="Flags" type="byte" />
 			<field name="Position" type="posFloat" />
-			<field name="Pitch" type="rotationalFloat" />
-			<field name="Yaw" type="rotationalFloat" />
-			<field name="HeadYaw" type="rotationalFloat" />
+			<field name="Pitch" type="rotationFloat" />
+			<field name="Yaw" type="rotationFloat" />
+			<field name="HeadYaw" type="rotationFloat" />
 		</packet>
 
 		<packet id="0x13" name="MCPE_MOVE_PLAYER">
@@ -856,8 +856,13 @@
 		</packet>
 
 		<packet id="0x2c" name="MCPE_ANIMATE">
-			<field name="Action ID" type="varInt" />
+			<field name="Action ID" type="varInt" refId="flags"/>
 			<field name="Runtime Entity ID" type="unsignedVarLong" />
+			<flags ref="flags">
+				<case value="0x80">
+					<field name="Float" type="float" />
+				</case>
+			</flags>
 		</packet>
 
 		<packet id="0x2d" name="MCPE_RESPAWN">
@@ -1068,9 +1073,120 @@
 
 		<packet id="0x41" name="MCPE_EVENT">
 			<field name="Runtime Entity ID" type="unsignedVarLong" />
-			<field name="Event data" type="varInt" />
-			<field name="Event type" type="byte" />
-			<!-- TODO: -->
+			<field name="EventType" type="varInt" refId="type" />
+			<field name="UsePlayerId" type="byte" />
+			<switch name="EventData" ref="type">
+				<case value="0">
+					<field name="AchievementId" type="varInt" />
+				</case>
+				<case value="1">
+					<field name="InteractionType" type="varInt" />
+					<field name="InteractionEntityType" type="varInt" />
+					<field name="EntityVariant" type="varInt" />
+					<field name="EntityColor" type="byte" />
+				</case>
+				<case value="2">
+					<field name="DimensionId" type="varInt" />
+				</case>
+				<case value="3">
+					<field name="FromDimensionId" type="varInt" />
+					<field name="ToDimensionId" type="varInt" />
+				</case>
+				<case value="4">
+					<field name="KillerUniqueEntityId" type="varLong" />
+					<field name="VictimUniqueEntityId" type="varLong" />
+					<field name="KillerEntityType" type="varInt" />
+					<field name="EntityDamageCause" type="varInt" />
+					<field name="VillagerTradeTier" type="varInt" />
+					<field name="VillagerDisplayName" type="string" />
+				</case>
+				<case value="5">
+					<field name="PotionId" type="varInt" />
+					<field name="Color" type="varInt" />
+					<field name="FillLevel" type="varInt" />
+				</case>
+				<case value="6">
+					<field name="AttackerEntityId" type="varInt" />
+					<field name="EntityDamageCause" type="varInt" />
+				</case>
+				<case value="7">
+					<field name="BossUniqueEntityId" type="varLong" />
+					<field name="PlayerPartySize" type="varInt" />
+					<field name="InteractionEntityType" type="varInt" />
+				</case>
+				<case value="8">
+					<field name="AgentResult" type="varInt" />
+					<field name="DataValue" type="varInt" />
+					<field name="Command" type="string" />
+					<field name="DataKey" type="string" />
+					<field name="Output" type="string" />
+				</case>
+				<case value="10">
+					<field name="ItemId" type="varInt" />
+					<field name="AuxValue" type="varInt" />
+					<field name="PatternSize" type="varInt" />
+					<field name="PatternIndex" type="varInt" />
+					<field name="PatternColor" type="varInt" />
+				</case>
+				<case value="11">
+					<field name="SuccessCount" type="varInt" />
+					<field name="Unknown" type="varInt" />
+					<field name="CommandName" type="string" />
+					<field name="OutputMessages" type="string" />
+				</case>
+				<case value="12">
+					<field name="Pattern" type="varInt" />
+					<field name="Preset" type="varInt" />
+					<field name="BucketedEntityType" type="varInt" />
+					<field name="IsRelease" type="bool" />
+				</case>
+				<case value="13">
+					<field name="EntityType" type="varInt" />
+					<field name="EntityVariant" type="varInt" />
+					<field name="EntityColor" type="byte" />
+				</case>
+				<case value="14">
+					<field name="IsKilledByOwner" type="bool" />
+					<field name="KillerUniqueEntityId" type="varLong" />
+					<field name="PetUniqueEntityId" type="varInt" />
+					<field name="EntityDamageCause" type="varInt" />
+					<field name="PetEntityType" type="varInt" />
+				</case>
+				<case value="15">
+					<field name="BlockInteractionType" type="varInt" />
+					<field name="ItemId" type="varInt" />
+				</case>
+				<case value="16">
+					<field name="BlockInteractionType" type="varInt" />
+					<field name="ItemId" type="varInt" />
+				</case>
+				<case value="17">
+					<field name="ItemId" type="varInt" />
+				</case>
+				<case value="18">
+					<field name="EventName" type="string" />
+				</case>
+				<case value="19">
+					<field name="CurrentRaidWave" type="varInt" />
+					<field name="TotalRaidWave" type="varInt" />
+					<field name="HasWonRaid" type="bool" />
+				</case>
+				<case value="20">
+					<field name="EventType" type="byte" />
+					<field name="CheatingScore" type="float" />
+					<field name="AveragePositionDelta" type="float" />
+					<field name="TotalPositionDelta" type="float" />
+					<field name="MinPositionDelta" type="float" />
+					<field name="MaxPositionDelta" type="float" />
+				</case>
+				<case value="21">
+					<field name="PositionDelta" type="float" />
+					<field name="CheatingScore" type="float" />
+					<field name="ScoreThreshold" type="float" />
+					<field name="DistanceThreshold" type="float" />
+					<field name="DurationThreshold" type="int" />
+				</case>
+			</switch>
 		</packet>
 
 		<packet id="0x42" name="MCPE_SPAWN_EXPERIENCE_ORB">
@@ -1548,6 +1664,11 @@
 			</list>
 		</packet>
 
+		<packet id="0x8e" name="MCPE_COMPLETED_USING_ITEM">
+			<field name="ItemId" type="short" />
+			<field name="Action" type="int" />
+		</packet>
+		
 		<packet id="0x8f" name="MCPE_NETWORK_SETTINGS">
 			<field name="Unknown" type="byte" />
 			<field name="Compression threshold" type="byte" />

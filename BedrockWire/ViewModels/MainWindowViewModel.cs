@@ -291,7 +291,7 @@ namespace BedrockWire.ViewModels
 
         private bool IsPacketVisible(Packet packet)
         {
-            if (FilterOutNoise && (packet.Id == 111 || packet.Id == 40 || packet.Id == 58 || packet.Id == 144))
+            if (FilterOutNoise && (packet.Id == 111 || packet.Id == 40 || packet.Id == 58 || packet.Id == 144 || packet.Id == 39))
             {
                 return false;
             }
